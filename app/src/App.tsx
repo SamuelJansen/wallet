@@ -15,7 +15,7 @@ export const App = () => {
       authenticationService
     }}>
 
-      <div className='absolute w-screen h-auto m-0 flex flex-col bg-yellow-500'>
+      <div className='absolute w-screen h-auto min-h-screen m-0 flex flex-col bg-yellow-500'>
         <TopbarComponent />
         <div className='w-full h-full flex flex-col text-black'>
           <div className='w-full h-full flex flex-col items-center'>
