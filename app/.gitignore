@@ -1,3 +1,8 @@
+#custom
+google-oauth-info.json
+*google-oauth-info.json
+*oauth*.json
+
 # Logs
 logs
 *.log

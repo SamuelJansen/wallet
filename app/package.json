@@ -4,14 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "local": "vite --host 0.0.0.0 --port 7888",
+    "dev": "set VITE_ACTIVE_ENVIRONMENT=local-to-dev & vite --port 7890",
+    "local": "set VITE_ACTIVE_ENVIRONMENT=local & vite --port 7890",
     "build": "tsc && vite build",
-    "serve": "vite --host 0.0.0.0 --port 7888",
+    "serve": "vite --host 0.0.0.0 --port 7890",
     "preview": "vite preview"
   },
   "dependencies": {
     "dotenv": "^16.0.3",
+    "phosphor-react": "^1.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

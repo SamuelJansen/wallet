@@ -1,11 +1,19 @@
 import './styles/main.css'
 
 import { AppContext } from './context/AppContext'
-import { TopbarComponent } from './component/TopbarComponent'
+import { TopbarComponent } from './component/topbar/TopbarComponent'
+import { useContextState } from './context-manager/ContextState'
+import { StyleServiceProvider } from './service/style/StyleService'
+import { AuthenticationServiceProvider } from './service/authentication/AuthenticationService'
 
-const App = () => {
+export const App = () => {
+  const [styleService] = useContextState(() => StyleServiceProvider())
+  const [authenticationService] = useContextState(() => AuthenticationServiceProvider())
   return (
-    <AppContext.Provider value={{}}>
+    <AppContext.Provider value={{
+      styleService,
+      authenticationService
+    }}>
 
       <div className='absolute w-screen h-auto m-0 flex flex-col bg-yellow-500'>
         <TopbarComponent />
@@ -62,9 +70,6 @@ const App = () => {
 
       </div>
 
-      </AppContext.Provider>
-    
+    </AppContext.Provider>
   )
 }
-
-export default App
