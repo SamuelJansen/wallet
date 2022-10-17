@@ -4,13 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "set VITE_ACTIVE_ENVIRONMENT=local-to-dev & vite --port 7890",
-    "local": "set VITE_ACTIVE_ENVIRONMENT=local & vite --port 7890",
+    "dev": "set VITE_ACTIVE_ENVIRONMENT=local-to-dev & vite --host 0.0.0.0 --port 7890",
+    "local": "set VITE_ACTIVE_ENVIRONMENT=local & vite --host 0.0.0.0 --port 7890",
     "build": "tsc && vite build",
     "serve": "vite --host 0.0.0.0 --port 7890",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-toggle-group": "^1.0.0",
     "dotenv": "^16.0.3",
     "phosphor-react": "^1.4.1",
     "react": "^18.2.0",

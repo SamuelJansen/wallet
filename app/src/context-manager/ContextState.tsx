@@ -29,11 +29,14 @@ class ContexState {
         this.propagateState()
     }
 
+    getState = () => {
+        return this.state
+    }
+
     overrideUpdateHandler = (stateUpdateHandler: any) => {
         this.stateUpdateHandler = stateUpdateHandler
     }
 }
-
 
 const useContextState = (provider: any) => {
     const [provided, setProvided] = useState(provider)
@@ -42,6 +45,14 @@ const useContextState = (provider: any) => {
         provided
     ]
 }
+
+// const useContextState = (provider: any): ContexState[] => {
+//     const [provided, setProvided] = useState<ContexState>(provider)
+//     provided.overrideUpdateHandler(setProvided)
+//     return [
+//         provided
+//     ]
+// }
 
 export {
     ContexState,

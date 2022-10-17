@@ -1,39 +1,63 @@
+import { useContext, useState } from "react";
+import { AppContext } from "../../context/AppContext";
 import { AuthenticationComponent } from "../authentication/AuthenticationComponent";
+import * as ToggleGroup from '@radix-ui/react-toggle-group'
 
 
-export const TOBBAR_DIMMENTONS = 32
-const TOBBAR_TAILWIND_DIMMENTONS = `w-full h-${TOBBAR_DIMMENTONS/4}`
-const TOBBAR_BACKGROUND_COLOR = 'bg-black'
+export const TOPBAR_DIMMENTONS = 32
+export const BORDER_WIDTH = 2
+const TOPBAR_TAILWIND_DIMMENTONS = `w-full h-8`
+const TOPBAR_BACKGROUND_COLOR = 'bg-black'
 
 export const TopbarComponent = () => {
+    
+    const { styleService, authenticationService, balanceService, pageManger } = useContext<any>(AppContext)
+
+    const getPages = () => {
+        return pageManger.getAuthorizedPages().map((pageName: string, index: number) => {
+            return (
+                <ToggleGroup.Item
+                    key={index} 
+                    value={pageName}
+                    className={`w-[100px] h-full mr-4 ${pageManger.isSelectedPage(pageName) ? styleService.getTWBorder() : ''} flex justify-center items-center ${styleService.getTWTextColor()}`}
+                    onClick={() => pageName==='balances' ? balanceService.getBalances() : () => {} }
+                >
+                    <span>{pageName}</span>
+                </ToggleGroup.Item>
+            )
+        })
+    }
+
     return (
-        <div className='w-full h-8 flex flex-col'>
+        <div className={`${TOPBAR_TAILWIND_DIMMENTONS} flex flex-col`}>
 
-            <div className={`fixed ${TOBBAR_TAILWIND_DIMMENTONS} px-4 flex justify-content-between items-center ${TOBBAR_BACKGROUND_COLOR}`}>
+            <div className={`fixed ${TOPBAR_TAILWIND_DIMMENTONS} px-2 flex justify-content-between items-center ${TOPBAR_BACKGROUND_COLOR}`}>
 
-                <div className='w-[185px] h-full flex justify-content-left items-center'>
-                    <h1 className='w-full h-full flex justify-content-center items-center text-yellow-400 font-bold text-lg'>
-                        Wallet
+                <div className='w-[185px] h-full mr-8 flex justify-start items-center'>
+                    <h1 className={`w-full h-full flex justify-center items-center ${styleService.getTWTextColor()} font-bold text-xl`}>
+                        wallet
                     </h1>
                 </div>
 
-                <div className='w-full h-full flex justify-content-right items-center'>
-                    <div className='w-full h-full'></div>
-                    <AuthenticationComponent />
-                    {/* <h1 className='pl-4 text-right text-yellow-400'>
-                        icon
-                    </h1>
-                    <h1 className='pl-4 text-right text-yellow-400'>
-                        icon
-                    </h1>
-                    <h1 className='pl-4 text-right text-yellow-400'>
-                        icon
-                    </h1> */}
-                </div>
+                <ToggleGroup.Root
+                    type='single'
+                    value={pageManger.getSelectedPage()}
+                    onValueChange={(v) => {
+                        if (v) pageManger.setSelectedPage(v);
+                    }}
+                    className='w-full h-full py-[0.2rem] flex justify-start items-center'
+                
+                >
+                    {getPages()}
+                </ToggleGroup.Root>
+
+                    <div className='w-full h-full flex justify-end items-center'>
+                        <AuthenticationComponent />
+                    </div>
 
             </div>
 
-            <div className={`${TOBBAR_TAILWIND_DIMMENTONS} ${TOBBAR_BACKGROUND_COLOR}`}>
+            <div className={`${TOPBAR_TAILWIND_DIMMENTONS} ${TOPBAR_BACKGROUND_COLOR}`}>
                 {/*under topbar filler*/}
             </div>
             

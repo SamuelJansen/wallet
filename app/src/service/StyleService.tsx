@@ -1,6 +1,6 @@
-import { ContexState } from "../../context-manager/ContextState";
-import { StorageUtil } from '../../util/local-storage/StorageUtil';
-import { STORAGE_KEYS } from '../../util/local-storage/SotrageKeys';
+import { ContexState } from "../context-manager/ContextState";
+import { StorageUtil } from '../util/local-storage/StorageUtil';
+import { STORAGE_KEYS } from '../util/local-storage/SotrageKeys';
 
 
 const DARK_MODE = `dark`
@@ -35,6 +35,26 @@ export class StyleService extends ContexState {
         }
     }
 
+    getBorderColor = () => {
+        return `${this.getColorMode().component.base}`
+    }
+
+    getTWTextColor = () => {
+        return `text-yellow-500`
+    }
+
+    getTWBackgroundColor = () => {
+        return `bg-yellow-500`
+    }
+
+    getTWBorder = () => {
+        return `border-solid rounded-xl border-2 ${this.getTWBorderColor()}`
+    }
+
+    getTWBorderColor = () => {
+        return `border-yellow-500`
+    }
+
     setColorMode = (nextMode: string) => {
         StorageUtil.set(STORAGE_KEYS.COLOR_MODE, nextMode)
         this.setState({...this.state, ...{colorMode: nextMode}})
@@ -61,7 +81,14 @@ export class StyleService extends ContexState {
     }
 
     build = (style: any, props={default:true}) => {
-        return !!style ? {...(props.default? this.state.default : {}), ...style} : {...(props.default ? this.state.default : {})}
+        return {
+            ...!!style ? {
+                ...(props.default ? this.state.default : {}), 
+                ...style
+            } : {
+                ...(props.default ? this.state.default : {})
+            }
+        }
     }
     
 }

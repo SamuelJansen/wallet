@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { TOBBAR_DIMMENTONS } from '../topbar/TopbarComponent';
+import { BORDER_WIDTH, TOPBAR_DIMMENTONS } from '../topbar/TopbarComponent';
 
 
 export const LoggedUserDataComponent = () => {
@@ -18,10 +18,10 @@ export const LoggedUserDataComponent = () => {
               src={authenticationService.state.loginData.picture} 
               referrerPolicy={"no-referrer"} 
               style={styleService.build({
-                  width: `${TOBBAR_DIMMENTONS - TOBBAR_DIMMENTONS/4 - 1}px`, 
-                  height: `${TOBBAR_DIMMENTONS - TOBBAR_DIMMENTONS/4 - 1}px`,
+                  width: `${TOPBAR_DIMMENTONS - TOPBAR_DIMMENTONS/4 - 1}px`, 
+                  height: `${TOPBAR_DIMMENTONS - TOPBAR_DIMMENTONS/4 - 1}px`,
                   borderRadius: "50%",
-                  border: `2.2px solid ${styleService.getColorMode().text}`,
+                  border: `${BORDER_WIDTH}px solid ${styleService.getBorderColor()}`,
                   borderColor: styleService.getColorMode().text
               })}
             />

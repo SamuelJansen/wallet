@@ -1,17 +1,18 @@
-import { ContexState } from "../../context-manager/ContextState";
-import { StorageUtil } from "../../util/local-storage/StorageUtil";
-import { STORAGE_KEYS } from "../../util/local-storage/SotrageKeys";
-import { EnvironmentUtil } from '../../util/environment/EnvironmentUtil'
-import { ReflectionUtil } from '../../util/ReflectionUtil'
-import { ENVIRONEMNT_KEYS } from '../../util/environment/EnvironmentKeys'
+import { ContexState } from "../context-manager/ContextState";
+import { StorageUtil } from "../util/local-storage/StorageUtil";
+import { STORAGE_KEYS } from "../util/local-storage/SotrageKeys";
+import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
+import { ReflectionUtil } from '../util/ReflectionUtil'
+import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 // import jwtDecode from "jwt-decode";
 
 const AUTHORIZATION_HEADER_KEY = `Authorization`
-const SCHEMA = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `http` : `https`
+const HTTPS_SCHEMA = `https`
+const SCHEMA = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `http` : HTTPS_SCHEMA
 const BASE_HOST = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `localhost` : EnvironmentUtil.get(ENVIRONEMNT_KEYS.BASE_HOST)
 const SITE_HOST = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `${BASE_HOST}:7890` : `studies.${BASE_HOST}` 
 const API_HOST = EnvironmentUtil.isDevelopment() || EnvironmentUtil.isLocalToDevelopment() ? EnvironmentUtil.get(ENVIRONEMNT_KEYS.AUTHENTICATION_API_HOST) : `${BASE_HOST}:7889` 
-const API_BASE_URL = `${SCHEMA}://${API_HOST}/authentication-manager-api`
+const API_BASE_URL = `${EnvironmentUtil.isLocalToDevelopment() ? HTTPS_SCHEMA : SCHEMA}://${API_HOST}/authentication-manager-api`
 
 export class AuthenticationService extends ContexState {
 
@@ -49,6 +50,10 @@ export class AuthenticationService extends ContexState {
         const loginData = StorageUtil.get(STORAGE_KEYS.LOGIN_DATA_KEY, null)
         this.setLoginData({loginData: loginData})
         return loginData
+    }
+
+    isAuthorized = () => {
+        return !!this.getAuthentication()
     }
 
     doLogin = async () => {
@@ -96,8 +101,8 @@ export class AuthenticationService extends ContexState {
                 "Access-Control-Allow-Origin": `*`,
                 "Access-Control-Allow-Headers": `*`,
                 "Access-Control-Expose-Headers": `*`,
-                "Access-Control-Allow-Methods": "*",
-                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Allow-Methods": `*`,
+                "Access-Control-Allow-Credentials": `true`,
                 "Referrer-Policy": `no-referrer`
             },
         })

@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { TOBBAR_DIMMENTONS } from '../topbar/TopbarComponent';
+import { TOPBAR_DIMMENTONS } from '../topbar/TopbarComponent';
 import { GoogleLoginComponent } from './GoogleLoginComponent';
 import { LoggedUserDataComponent } from './LoggedUserDataComponent';
 
@@ -10,8 +10,8 @@ export const AuthenticationComponent = () => {
     return (
         <div
             style={styleService.build({
-                width: `${TOBBAR_DIMMENTONS}px`, 
-                height: `${TOBBAR_DIMMENTONS}px`,
+                width: `${TOPBAR_DIMMENTONS}px`, 
+                height: `${TOPBAR_DIMMENTONS}px`,
                 padding: "0 0 0 0",
                 flexDirection: "row",
                 alignItems: "center",
