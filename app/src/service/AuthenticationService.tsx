@@ -5,6 +5,7 @@ import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ReflectionUtil } from '../util/ReflectionUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import jwtDecode from "jwt-decode";
+import { ObjectUtil } from "../util/ObjectUtil";
 
 const BEARER = 'Bearer' 
 const AUTHORIZATION_HEADER_KEY = `Authorization`
@@ -126,7 +127,7 @@ export class AuthenticationService extends ContexState<AuthenticationDataApi> {
     _handleLogin = async (googleData: any) => {
         const handleLoginResponse = await fetch(`${API_BASE_URL}/auth`, {
             method: `POST`,
-            body: JSON.stringify({}),
+            body: ObjectUtil.toJson({}),
             headers: {
                 "Accept": `application/json`,
                 "Content-Type": `application/json`,
@@ -160,7 +161,7 @@ export class AuthenticationService extends ContexState<AuthenticationDataApi> {
     _handleLogout = async () => {
         const res = await fetch(`${API_BASE_URL}/auth`, {
             method: `DELETE`,
-            body: JSON.stringify({}),
+            body: ObjectUtil.toJson({}),
             headers: {
                 "Content-Type": `application/json`,
                 "Access-Control-Allow-Origin": `*`,

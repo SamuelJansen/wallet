@@ -174,11 +174,14 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
                             this.overrideDataCollection(restResponse.body, RESOURCE_OPERATIONS.GET_COLLECTION)
                         } 
                         else {
-                            this._setNotProcessingState(RESOURCE_OPERATIONS.GET_COLLECTION)
+                            this._setProcessedState(this.service.getState(), RESOURCE_OPERATIONS.GET_COLLECTION)
                             informError({
                                 message: restResponse?.body?.message,
                                 details: []
                             })
+                            if (401 === restResponse.status) {
+                                this.authenticationService.doLogout()
+                            }
                         }
                         return restResponse
                     })
@@ -233,11 +236,14 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
                             this.overrideDataCollection(restResponse.body, RESOURCE_OPERATIONS.POST_COLLECTION)
                         } 
                         else {
-                            this._setNotProcessingState(RESOURCE_OPERATIONS.POST_COLLECTION)
+                            this._setProcessedState(this.service.getState(), RESOURCE_OPERATIONS.POST_COLLECTION)
                             informError({
                                 message: restResponse?.body?.message,
                                 details: []
                             })
+                            if (401 === restResponse.status) {
+                                this.authenticationService.doLogout()
+                            }
                         }
                         return restResponse
                     })
@@ -293,11 +299,14 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
                             this.overrideDataCollection(restResponse.body, RESOURCE_OPERATIONS.PATCH_COLLECTION)
                         } 
                         else {
-                            this._setNotProcessingState(RESOURCE_OPERATIONS.PATCH_COLLECTION)
+                            this._setProcessedState(this.service.getState(), RESOURCE_OPERATIONS.PATCH_COLLECTION)
                             informError({
                                 message: restResponse?.body?.message,
                                 details: []
                             })
+                            if (401 === restResponse.status) {
+                                this.authenticationService.doLogout()
+                            }
                         }
                         return restResponse
                     })
