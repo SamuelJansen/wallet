@@ -1,12 +1,12 @@
 import { ContexState } from "../context-manager/ContextState";
-import { StorageUtil } from '../util/local-storage/StorageUtil';
-import { STORAGE_KEYS } from '../util/local-storage/SotrageKeys';
+import { StorageUtil } from '../util/storage/StorageUtil';
+import { STORAGE_KEYS } from '../util/storage/SotrageKeys';
 
 
 const DARK_MODE = `dark`
 const LIGHT_MODE = `light`
 
-export class StyleService extends ContexState {
+export class StyleService extends ContexState<any> {
 
     constructor() {
         super()
@@ -28,6 +28,7 @@ export class StyleService extends ContexState {
             lightColorMode: {
                 component: {
                     headLine: `#CCCCCC`,
+                    contrast: `#000000`,
                     base: `#EFF1EE`
                 },
                 text: `#000000`
@@ -38,13 +39,33 @@ export class StyleService extends ContexState {
     getBorderColor = () => {
         return `${this.getColorMode().component.base}`
     }
+    
+    getTWTextBold = () => {
+        return `font-bold`
+    }
 
     getTWTextColor = () => {
-        return `text-yellow-500`
+        return `text-yellow-400`
+    }
+
+    getTWCardTextColor = () => {
+        return `text-black`
+    }
+
+    getTWCardTextTitle = () => {
+        return `${this.getTWTextBold()} ${this.getTWCardTextColor()}`
+    }
+    
+    getTWCardColor = () => {
+        return `bg-yellow-500`
+    }
+
+    getTWCardRounded = () => {
+        return `rounded-xl`
     }
 
     getTWBackgroundColor = () => {
-        return `bg-yellow-500`
+        return 'bg-black'
     }
 
     getTWBorder = () => {

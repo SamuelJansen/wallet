@@ -1,22 +1,31 @@
 import { useState } from 'react';
 
-class ContexState {
+
+export interface ServiceState {
+
+}
+
+export interface ManagerState {
+
+}
+
+export class ContexState<T extends ServiceState | ManagerState> {
 
     stateUpdateHandler: any
-    state: any
+    state: T | any
     
     constructor() {
         this.stateUpdateHandler = null
-        this.state = {}
+        this.state = {} as T
     }
 
     propagateState = () => {
         this.stateUpdateHandler({...this})
     }
 
-    setState = (props: any) => {
+    setStateWithoutPropagation = (props: T | any) => {
         if (!!props) {
-            Object.keys(props).forEach((key, index) => {
+            Object.keys(props).forEach((key: string, index) => {
                 if (!!props[key]) {
                     if (this.state[key] !== props[key]) {
                         this.state[key] = props[key]
@@ -26,7 +35,12 @@ class ContexState {
                 }
             })
         }
+    }
+
+    setState = (props: T | any) => {
+        this.setStateWithoutPropagation(props)
         this.propagateState()
+        return this.getState()
     }
 
     getState = () => {
@@ -38,7 +52,7 @@ class ContexState {
     }
 }
 
-const useContextState = (provider: any) => {
+export const useContextState = (provider: any) => {
     const [provided, setProvided] = useState(provider)
     provided.overrideUpdateHandler(setProvided)
     return [
@@ -46,15 +60,8 @@ const useContextState = (provider: any) => {
     ]
 }
 
-// const useContextState = (provider: any): ContexState[] => {
-//     const [provided, setProvided] = useState<ContexState>(provider)
-//     provided.overrideUpdateHandler(setProvided)
-//     return [
-//         provided
-//     ]
-// }
 
-export {
-    ContexState,
-    useContextState
+export interface DataStateProps {
+    data: object,
+    isLoaded: boolean
 }

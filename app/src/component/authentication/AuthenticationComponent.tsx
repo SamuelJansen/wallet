@@ -15,6 +15,7 @@ export const AuthenticationComponent = () => {
                 padding: "0 0 0 0",
                 flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center",
             })}
         >
             {

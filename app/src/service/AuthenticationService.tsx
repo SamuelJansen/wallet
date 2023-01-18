@@ -1,34 +1,65 @@
 import { ContexState } from "../context-manager/ContextState";
-import { StorageUtil } from "../util/local-storage/StorageUtil";
-import { STORAGE_KEYS } from "../util/local-storage/SotrageKeys";
+import { StorageUtil } from "../util/storage/StorageUtil";
+import { STORAGE_KEYS } from "../util/storage/SotrageKeys";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ReflectionUtil } from '../util/ReflectionUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
-// import jwtDecode from "jwt-decode";
+import jwtDecode from "jwt-decode";
 
+const BEARER = 'Bearer' 
 const AUTHORIZATION_HEADER_KEY = `Authorization`
 const HTTPS_SCHEMA = `https`
 const SCHEMA = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `http` : HTTPS_SCHEMA
 const BASE_HOST = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `localhost` : EnvironmentUtil.get(ENVIRONEMNT_KEYS.BASE_HOST)
-const SITE_HOST = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `${BASE_HOST}:7890` : `studies.${BASE_HOST}` 
+// const SITE_HOST = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopment() ? `${BASE_HOST}:7890` : `studies.${BASE_HOST}` 
 const API_HOST = EnvironmentUtil.isDevelopment() || EnvironmentUtil.isLocalToDevelopment() ? EnvironmentUtil.get(ENVIRONEMNT_KEYS.AUTHENTICATION_API_HOST) : `${BASE_HOST}:7889` 
 const API_BASE_URL = `${EnvironmentUtil.isLocalToDevelopment() ? HTTPS_SCHEMA : SCHEMA}://${API_HOST}/authentication-manager-api`
+const PUBLIC_USER_IDENTIFIER = 'PUBLIC_USER_IDENTIFIER'
 
-export class AuthenticationService extends ContexState {
+export interface LoginDataApi {
+    email: string
+    firstName: string
+    lastName: string
+    name: string
+    pictureUrl: string
+    status: 'ACTIVE' | 'ACTIVE_WITH_PENDENCIES' | 'INACTIVE' | 'NONE'
+    roles: [string]
+}
+
+export interface AuthenticationDataApi {
+    loginData: LoginDataApi | null
+    authorization: string
+}
+
+export class AuthenticationService extends ContexState<AuthenticationDataApi> {
 
     constructor() {
         super()
         this.state = {
-            loginData: StorageUtil.get(STORAGE_KEYS.LOGIN_DATA_KEY, null),
-            authorization: StorageUtil.get(STORAGE_KEYS.AUTHORIZATION_DATA_KEY, null)
-        }
+            ...this.state,
+            ...{
+                loginData: StorageUtil.get(STORAGE_KEYS.LOGIN_DATA_KEY, null),
+                authorization: StorageUtil.get(STORAGE_KEYS.AUTHORIZATION_DATA_KEY, null)
+            }
+        } as AuthenticationDataApi
     }
 
-    setLoginData = (loginData: any) => {
+    getAuthenticatedHeader = (): HeadersInit => {
+        return this.isAuthorized() ? {
+            [AUTHORIZATION_HEADER_KEY]: `${BEARER} ${this.getAuthorization()}`,
+
+         } : {}
+    }
+
+    getUserIdentifier = () => {
+        return this.isAuthorized() ? this.state?.loginData?.email : PUBLIC_USER_IDENTIFIER
+    }
+
+    setLoginData = (loginData: LoginDataApi | null) => {
         !!loginData ? this.setState({loginData: {...loginData}}) : this.setState({loginData: null})
     }
     
-    setAuthentication = (loginData: any) => {
+    setAuthentication = (loginData: LoginDataApi | null) => {
         this.setLoginData(loginData)
         StorageUtil.set(STORAGE_KEYS.LOGIN_DATA_KEY, loginData)
     }
@@ -37,8 +68,11 @@ export class AuthenticationService extends ContexState {
         return this.state.loginData
     }
     
-    setAuthorization = (authorization: any) => {
-        !!authorization ? this.setState({authorization: {...authorization}}) : this.setState({authorization: null})
+    setAuthorization = (authorization: string | null) => {
+        const authorizationState = {
+            authorization: authorization
+        }
+        !!authorization ? this.setState(authorizationState) : this.setState({authorization: null})
         StorageUtil.set(STORAGE_KEYS.AUTHORIZATION_DATA_KEY, authorization)
     }
     
@@ -47,8 +81,8 @@ export class AuthenticationService extends ContexState {
     }
 
     reloadAuthentication = () => {
-        const loginData = StorageUtil.get(STORAGE_KEYS.LOGIN_DATA_KEY, null)
-        this.setLoginData({loginData: loginData})
+        const loginData: LoginDataApi = StorageUtil.get(STORAGE_KEYS.LOGIN_DATA_KEY, null)
+        this.setLoginData(loginData)
         return loginData
     }
 
@@ -92,9 +126,7 @@ export class AuthenticationService extends ContexState {
     _handleLogin = async (googleData: any) => {
         const handleLoginResponse = await fetch(`${API_BASE_URL}/auth`, {
             method: `POST`,
-            body: JSON.stringify({
-                token: googleData.credential,
-            }),
+            body: JSON.stringify({}),
             headers: {
                 "Accept": `application/json`,
                 "Content-Type": `application/json`,
@@ -103,26 +135,37 @@ export class AuthenticationService extends ContexState {
                 "Access-Control-Expose-Headers": `*`,
                 "Access-Control-Allow-Methods": `*`,
                 "Access-Control-Allow-Credentials": `true`,
-                "Referrer-Policy": `no-referrer`
+                "Referrer-Policy": `no-referrer`,
+                [AUTHORIZATION_HEADER_KEY]: googleData.credential
             },
         })
-        const onlyToken = handleLoginResponse?.headers?.get(AUTHORIZATION_HEADER_KEY)?.split(` `)[1]
+        const onlyToken: string | undefined = handleLoginResponse?.headers?.get(AUTHORIZATION_HEADER_KEY)?.split(` `)[1]
         if (!!onlyToken) {
             this.setAuthorization(onlyToken);
-            this.setAuthentication(await handleLoginResponse.json());
+            const authenticationCompleteData : {
+                user_claims: {
+                    data: LoginDataApi
+                    context: [string]
+                }
+            } = await jwtDecode(onlyToken ? onlyToken : "1.2.3")
+            const accountData: LoginDataApi = authenticationCompleteData.user_claims.data
+            accountData.roles = authenticationCompleteData.user_claims.context
+            this.setAuthentication(accountData);
+        } else {
+            this.setAuthorization(null);
+            this.setAuthentication(null);
         }
     }
     
     _handleLogout = async () => {
         const res = await fetch(`${API_BASE_URL}/auth`, {
             method: `DELETE`,
-            body: JSON.stringify({
-                [AUTHORIZATION_HEADER_KEY]: `Bearer ${this.getAuthorization()}`,
-            }),
+            body: JSON.stringify({}),
             headers: {
                 "Content-Type": `application/json`,
                 "Access-Control-Allow-Origin": `*`,
-                "Sec-Fetch-Dest": `${API_BASE_URL}`
+                "Sec-Fetch-Dest": `${API_BASE_URL}`,
+                [AUTHORIZATION_HEADER_KEY]: `Bearer ${this.getAuthorization()}`
             },
         });
         this.setAuthorization(null);
