@@ -76,12 +76,12 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         return (
             <>
                 <div
+                    className='text-slate-100'
                     style={{
                         display: 'flex',
                         width: '100%',
                         marginBottom: '10px',
                         fontSize: '14px',
-                        color: '#FFF',
                     }}
                 >
                     <div
@@ -101,7 +101,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                     >Due at: {!!invoice ? DateTimeUtil.toUserDate(invoice.dueAt) : '...'}</div>
                 </div>
                 <div
-                    className={`${this.styleService.getTWTextColor()}`}
+                    className='text-slate-100'
                     style={{
                         marginBottom: '10px',
                         fontSize: '20px'
@@ -118,10 +118,11 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                 return invoice.installmentList
             })
             .map((installment: InstallmentApi) => {
+                const textCollor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-slate-100'
                 return (
                     <div 
                         key={installment.key}
-                        className="transaction"
+                        className={`${textCollor}`}
                         style={{
                             width: '100%',
                             padding: '10px',
@@ -130,7 +131,6 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                             borderRadius: '5px',
                             boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
                             textAlign: 'center',
-                            color: '#CCC',
                             fontSize: '14px',
                             display: 'flex',
                             flexDirection: 'row',
@@ -142,7 +142,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                             style={{
                                 width: '90px'
                             }}
-                        >{DateTimeUtil.toUserDate(installment.purchase.purchaseAt)}</div>
+                        >{DateTimeUtil.toUserDate(installment.installmentAt)}</div>
                         <div
                             style={{
                                 display: 'flex',
@@ -184,7 +184,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                                 style={{
                                     width: '90px'
                                 }}
-                            >R$ {-installment.value}</div>
+                            >R$ {installment.value}</div>
                             <div>
                                 {
                                     this.resourceManager.renderInvoiceOperations(installment, () => {

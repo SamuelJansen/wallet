@@ -94,8 +94,8 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'space-around',
-                            width: '300px',
-                            height: '200px',
+                            width: '350px',
+                            height: '240px',
                             backgroundColor: '#333',
                             borderRadius: '10px',
                             boxShadow: '0 0 10px rgba(255, 255, 255, 0.1)',
@@ -131,7 +131,7 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            width: '300px',
+                            width: '350px',
                             listStyle: 'none',
                             padding: '0',
                             margin: '0',
@@ -141,22 +141,22 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                         }}
                     >
                         <div
+                            className='text-slate-100'
                             style={{
                                 display: 'flex',
                                 width: '100%',
                                 marginBottom: '10px',
                                 fontSize: '18px',
-                                color: '#FFF',
                             }}
                         >
                             <div
-                                className={`${creditCard.value > creditCard.customLimit ? 'text-white' : 'text-red-600'}`}
+                                className={`${creditCard.value > 0 ? '' : this.styleService.getTWTextColor()}`}
                                 style={{
                                     display: 'flex',
                                     justifyContent: 'center',
                                     width: '50%'
                                 }}
-                            >Balance: R$ {-creditCard.value}</div>
+                            >Balance: R$ {creditCard.value}</div>
                             <div
                                 style={{
                                     display: 'flex',
