@@ -16,6 +16,7 @@ const BASE_HOST = EnvironmentUtil.isLocal() || EnvironmentUtil.isLocalToDevelopm
 const API_HOST = EnvironmentUtil.isDevelopment() || EnvironmentUtil.isLocalToDevelopment() ? EnvironmentUtil.get(ENVIRONEMNT_KEYS.AUTHENTICATION_API_HOST) : `${BASE_HOST}:7889` 
 const API_BASE_URL = `${EnvironmentUtil.isLocalToDevelopment() ? HTTPS_SCHEMA : SCHEMA}://${API_HOST}/authentication-manager-api`
 const PUBLIC_USER_IDENTIFIER = 'PUBLIC_USER_IDENTIFIER'
+const DEFAULT_USER_PICTURE_URL = ''
 
 export interface LoginDataApi {
     email: string
@@ -43,6 +44,10 @@ export class AuthenticationService extends ContexState<AuthenticationStateProps>
                 authorization: StorageUtil.get(STORAGE_KEYS.AUTHORIZATION_DATA_KEY, null)
             }
         } as AuthenticationStateProps
+    }
+
+    getUserPictureUrl = () => {
+        return this.isAuthorized() ? this.state.loginData?.pictureUrl : DEFAULT_USER_PICTURE_URL
     }
 
     getAuthenticatedHeader = (): HeadersInit => {

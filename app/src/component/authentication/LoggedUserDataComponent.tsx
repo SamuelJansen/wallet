@@ -23,7 +23,7 @@ export const LoggedUserDataComponent = () => {
           onClick={() => authenticationService.doLogout()}
         >
             <img
-              src={authenticationService.state.loginData.pictureUrl} 
+              src={authenticationService.getUserPictureUrl()} 
               referrerPolicy={"no-referrer"} 
               style={styleService.build({
                   padding: "0 0 0 0",
