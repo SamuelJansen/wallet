@@ -31,8 +31,12 @@ export interface CreditCardApi extends DataApi {
     customLimit: number
 }
 
+export interface CreditCardsServiceStateProps {
+    [key: string]: CreditCardApi[]
+}
+
 export interface CreditCardServiceStateProps extends ServiceState {
-    creditCards: CreditCardApi
+    creditCards: CreditCardsServiceStateProps
 }
 
 export interface CreditCardServiceProps {
@@ -42,7 +46,7 @@ export interface CreditCardServiceProps {
 export class CreditCardService extends ContexState<CreditCardServiceStateProps> implements CreditCardServiceProps {
 
     authenticationService: AuthenticationService
-    creditCards: DataCollectionExecutor<CreditCardServiceStateProps, CreditCardApi, CreditRequestApi>
+    creditCardsCollectionExecutor: DataCollectionExecutor<CreditCardsServiceStateProps, CreditCardApi, CreditRequestApi>
 
     constructor(props: CreditCardServiceProps) {
         super()
@@ -50,20 +54,20 @@ export class CreditCardService extends ContexState<CreditCardServiceStateProps> 
             ...this.state
         } as CreditCardServiceStateProps
         this.authenticationService = props.authenticationService
-        this.creditCards = new DataCollectionExecutor<CreditCardServiceStateProps, CreditCardApi, CreditRequestApi>({
+        this.creditCardsCollectionExecutor = new DataCollectionExecutor<CreditCardsServiceStateProps, CreditCardApi, CreditRequestApi>({
             url: `${API_BASE_URL}/credit-card/all`, 
-            stateName: `credit-card`, 
+            stateName: `creditCards`, 
             service: this,
             authenticationService: this.authenticationService
         })
     }
 
     getCachedCreditCards = () : CreditCardApi[] => {
-        return this.creditCards.accessCachedDataCollection()
+        return this.creditCardsCollectionExecutor.accessCachedDataCollection()
     }
 
     getCreditCards = () : CreditCardApi[] => {
-        return this.creditCards.getDataCollection()
+        return this.creditCardsCollectionExecutor.getDataCollection()
     }
     
 }

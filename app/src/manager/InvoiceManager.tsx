@@ -1,12 +1,13 @@
-import { ContexState } from "../context-manager/ContextState";
+import { ContexState, ManagerState } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
 import { InstallmentApi, InvoiceApi, InvoiceQueryApi, InvoiceService } from "../service/InvoiceService";
 import { DateTimeUtil } from "../util/DateTimeUtil";
 import { CreditCardApi } from "../service/CreditCardService";
 import { ResourceManager } from "./ResourceManager";
 import { PageService } from "../service/PageService";
+import { ObjectUtil } from "../util/ObjectUtil";
 
-export interface InvoiceManagerStateProps {
+export interface InvoiceManagerStateProps extends ManagerState {
     date: Date
 }
 
@@ -27,6 +28,9 @@ export interface InvoiceRenderProps {
     date: Date
 }
 
+interface InstallmentAtGroupedInstallmentsApi {
+    [key: string]: InstallmentApi[]
+}
 
 const getInvoiceQueryApi = (props: InvoiceQueryApiProps): InvoiceQueryApi => {
     return {
@@ -76,7 +80,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         return (
             <>
                 <div
-                    className='text-slate-100'
+                    className='text-gray-100'
                     style={{
                         display: 'flex',
                         width: '100%',
@@ -101,7 +105,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                     >Due at: {!!invoice ? DateTimeUtil.toUserDate(invoice.dueAt) : '...'}</div>
                 </div>
                 <div
-                    className='text-slate-100'
+                    className='text-gray-100'
                     style={{
                         marginBottom: '10px',
                         fontSize: '20px'
@@ -112,90 +116,115 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
     }
 
     renderInvoices = (props: InvoiceRenderProps) => {
-        return this.invoiceService.getInvoicesState()
+        const groupedInstallments: InstallmentAtGroupedInstallmentsApi = this.invoiceService.getInvoicesState()
             .filter((invoice: InvoiceApi) => props.creditCard.key === invoice.creditCard.key)
             .flatMap((invoice: InvoiceApi) => {
                 return invoice.installmentList
             })
-            .map((installment: InstallmentApi) => {
-                const textCollor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-slate-100'
-                return (
-                    <div 
-                        key={installment.key}
-                        className={`${textCollor}`}
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            margin: '0 0 10px 0',
-                            backgroundColor: '#222',
-                            borderRadius: '5px',
-                            boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
-                            textAlign: 'center',
-                            fontSize: '14px',
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                    >
-                        <div
-                            style={{
-                                width: '90px'
-                            }}
-                        >{DateTimeUtil.toUserDate(installment.installmentAt)}</div>
-                        <div
-                            style={{
-                                display: 'flex',
-                                width: '100%',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-
-                            }}
-                        >
-                            <div>
-                                {installment.label}
-                            </div>
-                            <div
+            .reduce((acc, installment) => {
+                (acc[installment.installmentAt] = acc[installment.installmentAt] || []).push(installment);
+                return acc;
+            }, {} as InstallmentAtGroupedInstallmentsApi)
+        return ObjectUtil.iterateOver(groupedInstallments).map((key: string, index: number) => {
+            return <div
+                key={key}
+                style={{
+                    width: '100%',
+                    fontSize: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'left'
+                  }}
+            >
+                <div
+                    className='text-gray-500 mx-2'
+                >{DateTimeUtil.toUserDate(key)}</div>
+                {
+                    groupedInstallments[key].map((installment: InstallmentApi) => {
+                        const textCollor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-gray-100'
+                        return (
+                            <div 
+                                key={installment.key}
+                                className={`${textCollor}`}
                                 style={{
-                                    padding: '0 4px 0 4px'
-                                }}
-                            ></div>
-                            <div
-                                style={{
-                                    margin: '4px 0 0 0',
-                                    color: '#999',
-                                    fontSize: '10px',
-                                }}
+                                    width: '100%',
+                                    padding: '10px',
+                                    margin: '0 0 10px 0',
+                                    backgroundColor: '#222',
+                                    borderRadius: '5px',
+                                    boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
+                                    textAlign: 'center',
+                                    fontSize: '14px',
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
                             >
-                                {installment.order + 1}/{installment.purchase.installments}
-                            </div> 
-                        </div>
-                        <div
-                            style={{
-                                width: '90px',
-                                display: 'flex',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: '90px'
-                                }}
-                            >R$ {installment.value}</div>
-                            <div>
-                                {
-                                    this.resourceManager.renderInvoiceOperations(installment, () => {
-                                        this.pageService.getManager()?.reRenderSelectedPage()
-                                    })
-                                }
+                                {/* <div
+                                    style={{
+                                        width: '90px'
+                                    }}
+                                >{DateTimeUtil.toUserDate(installment.installmentAt)}</div> */}
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        width: '100%',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        justifyContent: 'left'
+        
+                                    }}
+                                >
+                                    <div>
+                                        {installment.label}
+                                    </div>
+                                    <div
+                                        style={{
+                                            padding: '0 4px 0 4px'
+                                        }}
+                                    ></div>
+                                </div>
+                                <div
+                                    className='text-gray-500'
+                                    style={{
+                                        margin: '4px 0 0 0',
+                                        fontSize: '10px',
+                                    }}
+                                >
+                                    {installment.order + 1}/{installment.purchase.installments}
+                                </div> 
+                                <div
+                                    style={{
+                                        width: '90px',
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            width: '190px'
+                                        }}
+                                    >R$ {installment.value}</div>
+                                    <div>
+                                        {
+                                            this.resourceManager.renderInvoiceOperations(installment, () => {
+                                                this.pageService.getManager()?.reRenderSelectedPage()
+                                            })
+                                        }
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                )
-            })
+                        )
+                    })
+                } 
+            </div>
+        })
+    
+            
     }
 }
 

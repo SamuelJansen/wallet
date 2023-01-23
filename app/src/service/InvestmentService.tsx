@@ -1,4 +1,4 @@
-import { ContexState, DataStateProps } from "../context-manager/ContextState";
+import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { DataApi } from "../framework/DataApi";
 import { DataCollectionExecutor } from "../framework/DataCollectionExecutor";
 import { ENVIRONEMNT_KEYS } from "../util/environment/EnvironmentKeys";
@@ -45,34 +45,42 @@ export interface InvestmentReportApi extends DataApi {
 export interface InvestmentReportRequestApi extends DataApi {
 }
 
-export interface InvestmentServiceStateProps {
-    investments: DataStateProps,
-    investmentReports: DataStateProps
+export interface InvestmentServiceStateProps extends ServiceState{
+    investments: InvestmentsStateProps
+    investmentReports: InvestmentReportsStateProps
 }
 
 export interface InvestmentServiceProps {
     authenticationService: AuthenticationService
 }
 
+export interface InvestmentsStateProps {
+    [key: string]: InvestmentApi
+}
+
+export interface InvestmentReportsStateProps {
+    [key: string]: InvestmentReportApi
+}
+
 export class InvestmentService extends ContexState<InvestmentServiceStateProps> implements InvestmentServiceProps {
 
     authenticationService: AuthenticationService
-    investments: DataCollectionExecutor<InvestmentServiceStateProps, InvestmentApi, InvestmentRequestApi>
-    investmentReports: DataCollectionExecutor<InvestmentServiceStateProps, InvestmentReportApi, InvestmentReportRequestApi>
+    investmentsCollectionExecutor: DataCollectionExecutor<InvestmentsStateProps, InvestmentApi, InvestmentRequestApi>
+    investmentReportsCollectionExecutor: DataCollectionExecutor<InvestmentReportsStateProps, InvestmentReportApi, InvestmentReportRequestApi>
 
     constructor(props: InvestmentServiceProps) {
         super()
+        this.authenticationService = props.authenticationService
         this.state = {
             ...this.state
         } as InvestmentServiceStateProps
-        this.authenticationService = props.authenticationService
-        this.investments = new DataCollectionExecutor<InvestmentServiceStateProps, InvestmentApi, InvestmentRequestApi>({
+        this.investmentsCollectionExecutor = new DataCollectionExecutor<InvestmentsStateProps, InvestmentApi, InvestmentRequestApi>({
             url: `${API_BASE_URL}/investment/all`, 
             stateName: `investments`, 
             service: this,
             authenticationService: this.authenticationService
         })
-        this.investmentReports = new DataCollectionExecutor<InvestmentServiceStateProps, InvestmentReportApi, InvestmentReportRequestApi>({
+        this.investmentReportsCollectionExecutor = new DataCollectionExecutor<InvestmentReportsStateProps, InvestmentReportApi, InvestmentReportRequestApi>({
             url: `${API_BASE_URL}/investment/report/all`, 
             stateName: `investmentReports`, 
             service: this,
@@ -81,19 +89,19 @@ export class InvestmentService extends ContexState<InvestmentServiceStateProps> 
     }
 
     getCachedInvestments = () : InvestmentApi[] => {
-        return this.investments.accessCachedDataCollection()
+        return this.investmentsCollectionExecutor.accessCachedDataCollection()
     }
 
     getInvestments = () : InvestmentApi[] => {
-        return this.investments.getDataCollection()
+        return this.investmentsCollectionExecutor.getDataCollection()
     }
 
     getCachedInvestmentReports = () : InvestmentReportApi[] => {
-        return this.investmentReports.accessCachedDataCollection()
+        return this.investmentReportsCollectionExecutor.accessCachedDataCollection()
     }
 
     getInvestmentReports = () : InvestmentReportApi[] => {
-        return this.investmentReports.getDataCollection()
+        return this.investmentReportsCollectionExecutor.getDataCollection()
     }
     
 }

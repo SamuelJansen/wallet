@@ -1,4 +1,4 @@
-import { ContexState } from "../context-manager/ContextState";
+import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { StorageUtil } from "../util/storage/StorageUtil";
 import { STORAGE_KEYS } from "../util/storage/SotrageKeys";
 import { AuthenticationService } from "./AuthenticationService"
@@ -20,7 +20,7 @@ export const PAGES_NAMES = [
 ]
 
 
-export interface PageServiceStateProps {
+export interface PageServiceStateProps extends ServiceState {
     selectedPage: string
 }
 export interface PageServiceProps {

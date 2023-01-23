@@ -1,4 +1,4 @@
-import { ContexState } from "../context-manager/ContextState";
+import { ContexState, ManagerState } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
 import { ResourceService } from "../service/ResourceService";
 import { Check, Share} from 'phosphor-react'
@@ -6,7 +6,7 @@ import { ObjectUtil } from "../util/ObjectUtil";
 import { CreditCardApi } from "../service/CreditCardService";
 import { InstallmentApi, INSTALLMENT_STATUS, InvoiceService } from "../service/InvoiceService";
 
-export interface ResourceManagerStateProps {
+export interface ResourceManagerStateProps extends ManagerState {
 }
 
 export interface ResourceManagerProps {

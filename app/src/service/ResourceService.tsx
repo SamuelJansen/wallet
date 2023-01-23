@@ -4,7 +4,6 @@ import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
 import { DataCollectionExecutor } from "../framework/DataCollectionExecutor";
 import { DataApi } from "../framework/DataApi";
-import { CreditCardApi } from "./CreditCardService";
 
 
 const HTTPS_SCHEMA = `https`
@@ -28,8 +27,12 @@ export interface ResourceAccessRequestApi extends DataApi {
     accountKey: string
 }
 
+export interface CreditCardResourcesServiceStateProps extends ServiceState {
+    [key: string]: ResourceAccessApi[]
+}
+
 export interface ResourceServiceStateProps extends ServiceState {
-    creditCard: ResourceAccessApi
+    creditCards: CreditCardResourcesServiceStateProps
 }
 
 export interface ResourceServiceProps {
@@ -39,7 +42,7 @@ export interface ResourceServiceProps {
 export class ResourceService extends ContexState<ResourceServiceStateProps> implements ResourceServiceProps {
 
     authenticationService: AuthenticationService
-    creditCards: DataCollectionExecutor<ResourceServiceStateProps, ResourceAccessApi, ResourceAccessRequestApi>
+    creditCardsCollectionExecutor: DataCollectionExecutor<CreditCardResourcesServiceStateProps, ResourceAccessApi, ResourceAccessRequestApi>
 
     constructor(props: ResourceServiceProps) {
         super()
@@ -47,24 +50,16 @@ export class ResourceService extends ContexState<ResourceServiceStateProps> impl
             ...this.state
         } as ResourceServiceStateProps
         this.authenticationService = props.authenticationService
-        this.creditCards = new DataCollectionExecutor<ResourceServiceStateProps, ResourceAccessApi, ResourceAccessRequestApi>({
+        this.creditCardsCollectionExecutor = new DataCollectionExecutor<CreditCardResourcesServiceStateProps, ResourceAccessApi, ResourceAccessRequestApi>({
             url: `${API_BASE_URL}/resource/share/credit-card/all`, 
-            stateName: `resources-credit-card`, 
+            stateName: `creditCards`, 
             service: this,
             authenticationService: this.authenticationService
         })
     }
 
-    // getCachedResources = () : ResourceAccessApi[] => {
-    //     return this.creditCards.accessCachedDataCollection()
-    // }
-
-    // getResources = () : ResourceAccessApi[] => {
-    //     return this.creditCards.getDataCollection()
-    // }
-
     shareCreditCardCollection = (newAccesses: ResourceAccessRequestApi[]) : ResourceAccessApi[] => {
-        return this.creditCards.postDataCollection(newAccesses)
+        return this.creditCardsCollectionExecutor.postDataCollection(newAccesses)
     }
     
 }

@@ -1,6 +1,6 @@
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 
-import { ContexState } from "../context-manager/ContextState"
+import { ContexState, ManagerState } from "../context-manager/ContextState"
 import { StyleService } from "../service/StyleService"
 import { PAGES, PageService } from "../service/PageService"
 import { BalanceManager } from "../manager/BalanceManager"
@@ -8,7 +8,7 @@ import { InvestmentManager } from "../manager/InvestmentManager"
 import { CreditCardManager } from './CreditCardManager'
 
 
-export interface PageManagerStateProps {
+export interface PageManagerStateProps extends ManagerState {
 }
 
 export interface PageManagerProps {

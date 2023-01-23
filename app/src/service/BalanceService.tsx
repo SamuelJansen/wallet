@@ -20,6 +20,10 @@ export interface BalanceApi extends DataApi {
 export interface BalanceRequestApi extends DataApi {
 }
 
+export interface BalancesServiceStateProps extends ServiceState {
+    [key:string]: BalanceApi[]
+}
+
 export interface BalanceServiceStateProps extends ServiceState {
     balances: BalanceApi
 }
@@ -31,7 +35,7 @@ export interface BalanceServiceProps {
 export class BalanceService extends ContexState<BalanceServiceStateProps> implements BalanceServiceProps {
 
     authenticationService: AuthenticationService
-    balances: DataCollectionExecutor<BalanceServiceStateProps, BalanceApi, BalanceRequestApi>
+    balancesCollectionExecutor: DataCollectionExecutor<BalancesServiceStateProps, BalanceApi, BalanceRequestApi>
 
     constructor(props: BalanceServiceProps) {
         super()
@@ -39,7 +43,7 @@ export class BalanceService extends ContexState<BalanceServiceStateProps> implem
             ...this.state
         } as BalanceServiceStateProps
         this.authenticationService = props.authenticationService
-        this.balances = new DataCollectionExecutor<BalanceServiceStateProps, BalanceApi, BalanceRequestApi>({
+        this.balancesCollectionExecutor = new DataCollectionExecutor<BalancesServiceStateProps, BalanceApi, BalanceRequestApi>({
             url: `${API_BASE_URL}/balance/all`, 
             stateName: `balances`, 
             service: this,
@@ -48,11 +52,11 @@ export class BalanceService extends ContexState<BalanceServiceStateProps> implem
     }
 
     getCachedBalances = () : BalanceApi[] => {
-        return this.balances.accessCachedDataCollection()
+        return this.balancesCollectionExecutor.accessCachedDataCollection()
     }
 
     getBalances = () : BalanceApi[] => {
-        return this.balances.getDataCollection()
+        return this.balancesCollectionExecutor.getDataCollection()
     }
     
 }

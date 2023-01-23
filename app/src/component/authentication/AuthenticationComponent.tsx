@@ -1,12 +1,12 @@
 import { useContext } from 'react';
-import { AppContext } from '../../context/AppContext';
+import { AppContext, AppContextProps } from '../../context/AppContext';
 import { TOPBAR_DIMMENTONS } from '../topbar/TopbarComponent';
 import { GoogleLoginComponent } from './GoogleLoginComponent';
 import { LoggedUserDataComponent } from './LoggedUserDataComponent';
 
 
 export const AuthenticationComponent = () => {
-    const { styleService, authenticationService } = useContext<any>(AppContext)
+    const { styleService, authenticationService } = useContext<AppContextProps>(AppContext)
     return (
         <div
             style={styleService.build({

@@ -10,20 +10,29 @@ import { CreditCardManager } from '../manager/CreditCardManager'
 import { InvoiceManager } from '../manager/InvoiceManager'
 import { ResourceService } from '../service/ResourceService'
 import { ResourceManager } from '../manager/ResourceManager'
+import { InvoiceService } from '../service/InvoiceService'
+import { CreditCardService } from '../service/CreditCardService'
+import { PageService } from '../service/PageService'
 
-export const AppContext = createContext({
 
-    styleService: StyleService,
-    authenticationService: AuthenticationService,
-    resourceService: ResourceService,
-    balanceService: BalanceService,
-    investmentService: InvestmentService,
+export interface AppContextProps {
 
-    resourceManager: ResourceManager,
-    balanceManager: BalanceManager,
-    investmentManager: InvestmentManager,
-    invoiceManager: InvoiceManager,
-    creditCardManager: CreditCardManager,
-    pageManager: PageManager
-    
-  })
+  styleService: StyleService,
+  authenticationService: AuthenticationService,
+  resourceService: ResourceService,
+  balanceService: BalanceService,
+  investmentService: InvestmentService,
+  invoiceService: InvoiceService,
+  creditCardService: CreditCardService,
+  pageService: PageService,
+
+  resourceManager: ResourceManager,
+  balanceManager: BalanceManager,
+  investmentManager: InvestmentManager,
+  invoiceManager: InvoiceManager,
+  creditCardManager: CreditCardManager,
+  pageManager: PageManager
+  
+}
+
+export const AppContext = createContext<AppContextProps | any>({})

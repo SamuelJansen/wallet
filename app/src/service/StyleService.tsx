@@ -1,12 +1,15 @@
-import { ContexState } from "../context-manager/ContextState";
+import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { StorageUtil } from '../util/storage/StorageUtil';
 import { STORAGE_KEYS } from '../util/storage/SotrageKeys';
 
+export interface StyleStateProps extends ServiceState {
+
+}
 
 const DARK_MODE = `dark`
 const LIGHT_MODE = `light`
 
-export class StyleService extends ContexState<any> {
+export class StyleService extends ContexState<StyleStateProps> {
 
     constructor() {
         super()
@@ -114,4 +117,6 @@ export class StyleService extends ContexState<any> {
     
 }
 
-export const StyleServiceProvider = () => new StyleService()
+export function StyleServiceProvider(): StyleService {
+    return new StyleService()
+}

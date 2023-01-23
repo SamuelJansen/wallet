@@ -49,10 +49,17 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
     }
 
     setSelectedCreditCard = (creditCard: CreditCardApi) => {
-        this.setState({selectedCreditCard: {
-            key: creditCard.key,
-            dueDay: creditCard.dueDay
-        }})
+        if (this.getSelectedCreditCard().key && creditCard.key === this.getSelectedCreditCard().key) {
+            this.setState({selectedCreditCard: {
+                key: null,
+                dueDay: null
+            }})
+        } else {
+            this.setState({selectedCreditCard: {
+                key: creditCard.key,
+                dueDay: creditCard.dueDay
+            }})
+        }
         this.getCreditCards()
     }
 
@@ -141,7 +148,7 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                         }}
                     >
                         <div
-                            className='text-slate-100'
+                            className='text-gray-100'
                             style={{
                                 display: 'flex',
                                 width: '100%',

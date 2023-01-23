@@ -1,18 +1,23 @@
 import { useState } from 'react';
+import { ObjectUtil } from '../util/ObjectUtil';
 
+
+export interface ContextProvider<T> extends CallableFunction {
+    (): T | (() => T)
+}
 
 export interface ServiceState {
-
+    [key: string]: any
 }
 
 export interface ManagerState {
-
+    [key: string]: any
 }
 
 export class ContexState<T extends ServiceState | ManagerState> {
 
     stateUpdateHandler: any
-    state: T | any
+    state: T
     
     constructor() {
         this.stateUpdateHandler = null
@@ -23,9 +28,9 @@ export class ContexState<T extends ServiceState | ManagerState> {
         this.stateUpdateHandler({...this})
     }
 
-    setStateWithoutPropagation = (props: T | any) => {
+    setStateWithoutPropagation = (props: ServiceState | ManagerState) => {
         if (!!props) {
-            Object.keys(props).forEach((key: string, index) => {
+            ObjectUtil.iterateOver(props).forEach((key: string, index: number) => {
                 if (!!props[key]) {
                     if (this.state[key] !== props[key]) {
                         this.state[key] = props[key]
@@ -52,16 +57,19 @@ export class ContexState<T extends ServiceState | ManagerState> {
     }
 }
 
-export const useContextState = (provider: any) => {
-    const [provided, setProvided] = useState(provider)
+// export const useContextState = (provider: any) => {
+//     const [provided, setProvided] = useState(provider)
+//     provided.overrideUpdateHandler(setProvided)
+//     return [
+//         provided
+//     ]
+// }
+
+
+
+export function useContextState<T extends ContexState<ServiceState | ManagerState>>(provider: any): T {
+    const [provided, setProvided] = useState<T>(provider as (() => T))
     provided.overrideUpdateHandler(setProvided)
-    return [
-        provided
-    ]
+    return provided
 }
 
-
-export interface DataStateProps {
-    data: object,
-    isLoaded: boolean
-}

@@ -68,12 +68,17 @@ export interface InvoiceRequestApi extends DataApi {
 export interface InstallmentRequestApi extends DataApi {
 }
 
-export interface InvoiceServiceStateProps extends ServiceState {
-    invoice: InvoiceApi
+export interface InvoicesServiceStateProps extends ServiceState {
+    [key: string]: InvoiceApi
 }
 
-export interface InstallmentServiceStateProps extends ServiceState {
-    installment: InstallmentApi
+export interface InstallmentsServiceStateProps extends ServiceState {
+    [key: string]: InstallmentApi
+}
+
+export interface InvoiceServiceStateProps extends ServiceState {
+    invoices: InvoicesServiceStateProps,
+    instalments: InstallmentsServiceStateProps
 }
 
 export interface InvoiceServiceProps {
@@ -83,43 +88,43 @@ export interface InvoiceServiceProps {
 export class InvoiceService extends ContexState<InvoiceServiceStateProps> implements InvoiceServiceProps {
 
     authenticationService: AuthenticationService
-    invoices: DataCollectionExecutor<InvoiceServiceStateProps, InvoiceApi, InvoiceRequestApi>
-    instalments: DataCollectionExecutor<InvoiceServiceStateProps, InstallmentApi, InstallmentRequestApi>
+    invoicesCollectionExecutor: DataCollectionExecutor<InvoicesServiceStateProps, InvoiceApi, InvoiceRequestApi>
+    instalmentsCollectionExecutor: DataCollectionExecutor<InstallmentsServiceStateProps, InstallmentApi, InstallmentRequestApi>
 
     constructor(props: InvoiceServiceProps) {
         super()
+        this.authenticationService = props.authenticationService
         this.state = {
             ...this.state
         } as InvoiceServiceStateProps
-        this.authenticationService = props.authenticationService
-        this.invoices = new DataCollectionExecutor<InvoiceServiceStateProps, InvoiceApi, InvoiceRequestApi>({
+        this.invoicesCollectionExecutor = new DataCollectionExecutor<InvoicesServiceStateProps, InvoiceApi, InvoiceRequestApi>({
             url: `${API_BASE_URL}/invoice/all`, 
-            stateName: `invoice`, 
+            stateName: `invoices`, 
             service: this,
             authenticationService: this.authenticationService
         })
-        this.instalments = new DataCollectionExecutor<InstallmentServiceStateProps, InstallmentApi, InstallmentRequestApi>({
+        this.instalmentsCollectionExecutor = new DataCollectionExecutor<InstallmentsServiceStateProps, InstallmentApi, InstallmentRequestApi>({
             url: `${API_BASE_URL}/installment/all`, 
-            stateName: `instalment`, 
+            stateName: `instalments`, 
             service: this,
             authenticationService: this.authenticationService
         })
     }
 
     getInvoicesState = (query?: InvoiceQueryApi) : InvoiceApi[] => {
-        return this.invoices.accessCachedDataCollection(query ? {
+        return this.invoicesCollectionExecutor.accessCachedDataCollection(query ? {
             query: query
         } : {})
     }
 
     getInvoices = (query?: InvoiceQueryApi) : InvoiceApi[] => {
-        return this.invoices.getDataCollection(query ? {
+        return this.invoicesCollectionExecutor.getDataCollection(query ? {
             query: query
         } : {})
     }
 
     proccessAll = (query?: InstallmentQueryApi, callback?: CallableFunction) : InstallmentApi[] => {
-        return this.instalments.patchDataCollection(
+        return this.instalmentsCollectionExecutor.patchDataCollection(
             [], 
             query ? {
                 query: query

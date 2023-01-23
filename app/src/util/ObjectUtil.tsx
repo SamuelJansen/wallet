@@ -17,7 +17,12 @@ const toObject = (json: string | null) => {
     return null
 }
 
+const iterateOver = (props: any) => {
+    return Object.keys(props)
+}
+
 export const ObjectUtil = {
+    iterateOver,
     generateUniqueKey,
     toJson,
     toObject

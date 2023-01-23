@@ -1,4 +1,4 @@
-import { ContexState } from "../context-manager/ContextState";
+import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { StorageUtil } from "../util/storage/StorageUtil";
 import { STORAGE_KEYS } from "../util/storage/SotrageKeys";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
@@ -27,12 +27,12 @@ export interface LoginDataApi {
     roles: [string]
 }
 
-export interface AuthenticationDataApi {
+export interface AuthenticationStateProps extends ServiceState {
     loginData: LoginDataApi | null
     authorization: string
 }
 
-export class AuthenticationService extends ContexState<AuthenticationDataApi> {
+export class AuthenticationService extends ContexState<AuthenticationStateProps> {
 
     constructor() {
         super()
@@ -42,7 +42,7 @@ export class AuthenticationService extends ContexState<AuthenticationDataApi> {
                 loginData: StorageUtil.get(STORAGE_KEYS.LOGIN_DATA_KEY, null),
                 authorization: StorageUtil.get(STORAGE_KEYS.AUTHORIZATION_DATA_KEY, null)
             }
-        } as AuthenticationDataApi
+        } as AuthenticationStateProps
     }
 
     getAuthenticatedHeader = (): HeadersInit => {
