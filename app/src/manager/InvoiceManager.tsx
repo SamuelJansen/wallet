@@ -179,9 +179,17 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                     groupedInstallments[key].map((installment: InstallmentApi) => {
                         const textCollor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-gray-100'
                         return (
-                            <>
+                            <div
+                                key={`${installment.key}-installment`}
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >   
                                 <div 
-                                    key={`${installment.key}-installment`}
                                     className={`${textCollor}`}
                                     style={{
                                         width: '100%',
@@ -244,15 +252,11 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                                 {
                                     this.getSelectedPurchaseKeys()[this.getSelectedPurchaseKeys().indexOf(installment.purchaseKey)] ? 
                                     <div
-                                        key={`${installment.key}-purchase`}
                                         className={`${textCollor}`}
                                         style={{
                                             width: '100%',
-                                            padding: '10px',
+                                            padding: '0 10px 10px 10px',
                                             margin: '0 0 10px 0',
-                                            // backgroundColor: '#222',
-                                            // borderRadius: '5px',
-                                            // boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
                                             textAlign: 'center',
                                             fontSize: '14px',
                                             display: 'flex',
@@ -338,9 +342,9 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
 
                                     </div> : <></>
                                 }
-                                
-                            </>
-                            
+
+
+                            </div>                            
                         )
                     })
                 } 
