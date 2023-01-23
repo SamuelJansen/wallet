@@ -1,6 +1,6 @@
 import { ContexState, ManagerState } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
-import { InstallmentApi, InvoiceApi, InvoiceQueryApi, InvoiceService } from "../service/InvoiceService";
+import { InstallmentApi, InvoiceApi, InvoiceQueryApi, InvoiceService, PurchaseApi } from "../service/InvoiceService";
 import { DateTimeUtil } from "../util/DateTimeUtil";
 import { CreditCardApi } from "../service/CreditCardService";
 import { ResourceManager } from "./ResourceManager";
@@ -9,6 +9,7 @@ import { ObjectUtil } from "../util/ObjectUtil";
 
 export interface InvoiceManagerStateProps extends ManagerState {
     date: Date
+    selectedPurchaseKeys: string[]
 }
 
 export interface InvoiceManagerProps {
@@ -56,13 +57,46 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         this.state = {
             ...this.state,
             ...{
-                date: new Date()
+                date: new Date(),
+                selectedPurchaseKeys: []
             }
         } as InvoiceManagerStateProps
     }
 
+    pushSelectedPurchasesKey = (key: string) => {
+        const selectedPurchaseKeys = this.getSelectedPurchaseKeys()
+        const keyIndex = selectedPurchaseKeys.indexOf(key)
+        selectedPurchaseKeys.push(key)
+        this.setState({selectedPurchaseKeys: selectedPurchaseKeys})
+    }
+
+    popSelectedPurchasesKey = (key: string) => {
+        const selectedPurchaseKeys = this.getSelectedPurchaseKeys()
+        const keyIndex = selectedPurchaseKeys.indexOf(key)
+        selectedPurchaseKeys.splice(keyIndex, 1)
+        this.setState({selectedPurchaseKeys: selectedPurchaseKeys})
+    }
+
+    getSelectedPurchaseKeys = () => {
+        return [
+            ...this.getState().selectedPurchaseKeys
+        ]
+    }
+
+    isSelectedPurchaseKey = (key: string) => {
+        return 0 <= this.getSelectedPurchaseKeys().indexOf(key)
+    }
+
+    updateSelectedPurchaseKeys = (key: string) => {
+        if (this.isSelectedPurchaseKey(key)) {
+            this.popSelectedPurchasesKey(key)
+        } else {
+            this.pushSelectedPurchasesKey(key)
+        }
+    }
+
     getDate = () => {
-        return this.state.date
+        return this.getState().date
     }
 
     setDate = (givenInvoiceDate: Date) => {
@@ -125,6 +159,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                 (acc[installment.installmentAt] = acc[installment.installmentAt] || []).push(installment);
                 return acc;
             }, {} as InstallmentAtGroupedInstallmentsApi)
+        
         return ObjectUtil.iterateOver(groupedInstallments).map((key: string, index: number) => {
             return <div
                 key={key}
@@ -144,80 +179,168 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                     groupedInstallments[key].map((installment: InstallmentApi) => {
                         const textCollor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-gray-100'
                         return (
-                            <div 
-                                key={installment.key}
-                                className={`${textCollor}`}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    margin: '0 0 10px 0',
-                                    backgroundColor: '#222',
-                                    borderRadius: '5px',
-                                    boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
-                                    textAlign: 'center',
-                                    fontSize: '14px',
-                                    display: 'flex',
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                  }}
-                            >
-                                {/* <div
+                            <>
+                                <div 
+                                    key={`${installment.key}-installment`}
+                                    className={`${textCollor}`}
                                     style={{
-                                        width: '90px'
-                                    }}
-                                >{DateTimeUtil.toUserDate(installment.installmentAt)}</div> */}
-                                <div
-                                    style={{
-                                        display: 'flex',
                                         width: '100%',
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        justifyContent: 'left'
-        
-                                    }}
-                                >
-                                    <div>
-                                        {installment.label}
-                                    </div>
-                                    <div
-                                        style={{
-                                            padding: '0 4px 0 4px'
-                                        }}
-                                    ></div>
-                                </div>
-                                <div
-                                    className='text-gray-500'
-                                    style={{
-                                        margin: '4px 0 0 0',
-                                        fontSize: '10px',
-                                    }}
-                                >
-                                    {installment.order + 1}/{installment.purchase.installments}
-                                </div> 
-                                <div
-                                    style={{
-                                        width: '90px',
+                                        padding: '10px',
+                                        margin: '0 0 10px 0',
+                                        backgroundColor: '#222',
+                                        borderRadius: '5px',
+                                        boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
+                                        textAlign: 'center',
+                                        fontSize: '14px',
                                         display: 'flex',
                                         flexDirection: 'row',
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}
+                                    onClick={() => {
+                                        this.updateSelectedPurchaseKeys(installment.purchaseKey)
+                                    }}
                                 >
                                     <div
                                         style={{
-                                            width: '190px'
+                                            display: 'flex',
+                                            width: '100%',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'left'
+            
                                         }}
-                                    >R$ {installment.value}</div>
-                                    <div>
-                                        {
-                                            this.resourceManager.renderInvoiceOperations(installment, () => {
-                                                this.pageService.getManager()?.reRenderSelectedPage()
-                                            })
-                                        }
+                                    >
+                                        <div>
+                                            {installment.label}
+                                        </div>
+                                        <div
+                                            style={{
+                                                padding: '0 4px 0 4px'
+                                            }}
+                                        ></div>
+                                    </div>
+                                    <div
+                                        className='text-gray-500'
+                                        style={{
+                                            margin: '4px 0 0 0',
+                                            fontSize: '10px',
+                                        }}
+                                    >
+                                        {installment.order + 1}/{installment.purchase.installments}
+                                    </div> 
+                                    <div
+                                        style={{
+                                            width: '100px',
+                                            display: 'flex',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <div>R$ {installment.value}</div>
                                     </div>
                                 </div>
-                            </div>
+                                {
+                                    this.getSelectedPurchaseKeys()[this.getSelectedPurchaseKeys().indexOf(installment.purchaseKey)] ? 
+                                    <div
+                                        key={`${installment.key}-purchase`}
+                                        className={`${textCollor}`}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            margin: '0 0 10px 0',
+                                            // backgroundColor: '#222',
+                                            // borderRadius: '5px',
+                                            // boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
+                                            textAlign: 'center',
+                                            fontSize: '14px',
+                                            display: 'flex',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                width: '100%',
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                justifyContent: 'left'
+                
+                                            }}
+                                        >
+                                            <div>
+                                                {installment.purchase.label}
+                                            </div>
+                                            <div
+                                                style={{
+                                                    padding: '0 4px 0 4px'
+                                                }}
+                                            ></div>
+                                        </div>
+                                        <div
+                                            style={{
+                                                width: '100%',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <div
+                                                className='text-gray-500'
+                                                style={{
+                                                    display: 'flex',
+                                                    width: '100%',
+                                                    fontSize: '10px',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'right'
+                                                }}
+                                            >
+                                                Bought at: {DateTimeUtil.toUserDate(installment.purchase.purchaseAt)}
+                                            </div>
+                                            <div
+                                                className='text-gray-500'
+                                                style={{
+                                                    display: 'flex',
+                                                    width: '100%',
+                                                    fontSize: '10px',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'right'
+                                                }}
+                                            >
+                                                Instalments: {installment.purchase.installments}
+                                            </div> 
+                                        </div>
+                                        <div
+                                            style={{
+                                                width: '100px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    width: '90px'
+                                                }}
+                                            >R$ {installment.purchase.value}</div>
+                                            <div>
+                                                {
+                                                    this.resourceManager.renderInvoiceOperations(installment, () => {
+                                                        this.pageService.getManager()?.reRenderSelectedPage()
+                                                    })
+                                                }
+                                            </div>
+                                        </div>
+
+                                    </div> : <></>
+                                }
+                                
+                            </>
+                            
                         )
                     })
                 } 
