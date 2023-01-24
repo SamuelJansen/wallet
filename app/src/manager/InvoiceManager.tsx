@@ -171,17 +171,20 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'left'
-                  }}
+                }}
             >
                 <div
                     className='text-gray-500 mx-2'
+                    style={{
+                        fontSize: '10px'
+                    }}
                 >{DateTimeUtil.toUserDate(key)}</div>
                 {
                     groupedInstallments[key].map((installment: InstallmentApi) => {
                         const textCollor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-gray-100'
                         return (
                             <div
-                                key={`${installment.key}-installment`}
+                                key={`${installment.key}`}
                                 style={{
                                     width: '100%',
                                     display: 'flex',
@@ -236,7 +239,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                                             fontSize: '10px',
                                         }}
                                     >
-                                        {installment.order + 1}/{installment.purchase.installments}
+                                        {installment.order + 1 === installment.purchase.installments ? `` : `${installment.order + 1}/${installment.purchase.installments}`}
                                     </div> 
                                     <div
                                         style={{
