@@ -239,7 +239,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                                             fontSize: '10px',
                                         }}
                                     >
-                                        {installment.order + 1 === installment.purchase.installments ? `` : `${installment.order + 1}/${installment.purchase.installments}`}
+                                        {1 === installment.purchase.installments ? `` : `${installment.order + 1}/${installment.purchase.installments}`}
                                     </div> 
                                     <div
                                         style={{
