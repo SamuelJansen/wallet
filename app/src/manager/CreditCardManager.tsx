@@ -157,7 +157,6 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                             }}
                         >
                             <div
-                                className={`${creditCard.value > 0 ? '' : this.styleService.getTWTextColor()}`}
                                 style={{
                                     display: 'flex',
                                     justifyContent: 'center',

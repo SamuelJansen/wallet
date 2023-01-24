@@ -111,6 +111,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         const invoice = this.invoiceService.getInvoicesState().find((invoice: InvoiceApi) => {
             return props.creditCard.key === invoice.creditCard.key
         })
+        const invoiceIsPresent = !!invoice
         return (
             <>
                 <div
@@ -129,24 +130,24 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                             justifyContent: 'center',
                             width: '50%'
                         }}
-                    >Close at: {!!invoice ? DateTimeUtil.toUserDate(invoice.closeAt) : '...'}</div>
+                    >Close at: {invoiceIsPresent ? DateTimeUtil.toUserDate(invoice.closeAt) : '...'}</div>
                     <div
                         style={{
                             display: 'flex',
                             justifyContent: 'center',
                             width: '50%'
                         }}
-                    >Due at: {!!invoice ? DateTimeUtil.toUserDate(invoice.dueAt) : '...'}</div>
+                    >Due at: {invoiceIsPresent ? DateTimeUtil.toUserDate(invoice.dueAt) : '...'}</div>
                 </div>
                 <div
-                    className='text-gray-100'
+                    className={`${invoiceIsPresent && invoice.value < props.creditCard.customLimit ? 'text-red-600' : this.styleService.getTWTextColor()}`}
                     style={{
                         marginBottom: '10px',
                         fontSize: '20px'
                     }}
-                >Invoice: R$ { !!invoice ? -invoice.value : '...'}</div>
+                >Invoice: R$ { invoiceIsPresent ? -invoice.value : '...'}</div>
             </>
-        )
+        ) 
     }
 
     renderInvoices = (props: InvoiceRenderProps) => {
