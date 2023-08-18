@@ -66,8 +66,8 @@ export class CreditCardService extends ContexState<CreditCardServiceStateProps> 
         return this.creditCardsCollectionExecutor.accessCachedDataCollection()
     }
 
-    getCreditCards = () : CreditCardApi[] => {
-        return this.creditCardsCollectionExecutor.getDataCollection()
+    getCreditCards = (query?: {keyList: string[]}) : CreditCardApi[] => {
+        return this.creditCardsCollectionExecutor.getDataCollection({query})
     }
     
 }

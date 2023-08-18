@@ -4,8 +4,11 @@ import { CreditCardApi, CreditCardService } from "../service/CreditCardService";
 import { DateTimeUtil } from "../util/DateTimeUtil";
 import { InvoiceManager } from "./InvoiceManager";
 import { ResourceManager } from "./ResourceManager";
+import { ObjectUtil } from "../util/ObjectUtil";
+import { CreditCard } from "phosphor-react";
 
 export interface CreditCardManagerStateProps extends ManagerState {
+    accessibleCreditCardKeys: string[]
     selectedCreditCard: {
         key: string | null,
         dueDay: string | null
@@ -36,12 +39,35 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
         this.state = {
             ...this.state,
             ...{
+                accessibleCreditCardKeys: [],
                 selectedCreditCard: {
                     key: null,
                     dueDay: null
                 }
             }
         } as CreditCardManagerStateProps
+    }
+
+    pushAccessibleCreditCardKey = (key: string) => {
+        const accessibleCreditCardKeys = this.getAccessibleCreditCardKeys()
+        ObjectUtil.pushItIfNotIn(key, accessibleCreditCardKeys)
+        this.setState({accessibleCreditCardKeys: accessibleCreditCardKeys})
+    }
+
+    popAccessibleCreditCardKey = (key: string) => {
+        const accessibleCreditCardKeys = this.getAccessibleCreditCardKeys()
+        ObjectUtil.popIt(key, accessibleCreditCardKeys)
+        this.setState({accessibleCreditCardKeys: accessibleCreditCardKeys})
+    }
+
+    getAccessibleCreditCardKeys = () => {
+        return [
+            ...this.getState().accessibleCreditCardKeys
+        ]
+    }
+
+    isAccessibleCreditCardKey = (key: string) => {
+        return ObjectUtil.inIt(key, this.getAccessibleCreditCardKeys())
     }
 
     getSelectedCreditCard = () => {
@@ -64,7 +90,8 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
     }
 
     getCreditCards = () => {
-        const creditCardList = this.creditCardService.getCreditCards()
+        const creditCardList = this.creditCardService.getCreditCards({keyList: this.getAccessibleCreditCardKeys()})
+        creditCardList.forEach((creditCard: CreditCardApi) => this.pushAccessibleCreditCardKey(!!creditCard.key ? creditCard.key : ObjectUtil.generateUniqueKey()))
         this.invoiceManager.getInvoices({
             creditCardList: creditCardList,
             date: this.invoiceManager.getDate()

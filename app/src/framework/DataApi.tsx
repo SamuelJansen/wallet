@@ -9,7 +9,7 @@ export interface ErrorApi {
 
 export interface RestResponse<B> {
     originalResponse: any
-    body: B | ErrorApi
+    body: ErrorApi | B
     status: number
 }
 
@@ -27,3 +27,10 @@ export enum RESOURCE_OPERATIONS {
     HEAD = 'HEAD',
     OPTIONS = 'OPTIONS'
 }
+
+export const NOT_BODYABLE_OPERATIONS = [
+    RESOURCE_OPERATIONS.GET_COLLECTION, 
+    RESOURCE_OPERATIONS.GET_UNIT, 
+    RESOURCE_OPERATIONS.HEAD, 
+    RESOURCE_OPERATIONS.OPTIONS
+]

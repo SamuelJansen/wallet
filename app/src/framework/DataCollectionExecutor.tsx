@@ -1,16 +1,36 @@
 import { ContexState, ServiceState } from "../context-manager/ContextState"
 import { AuthenticationService } from "../service/AuthenticationService"
 import { ObjectUtil } from "../util/ObjectUtil"
-import { DataApi, ErrorApi, RESOURCE_OPERATIONS, RestResponse } from "./DataApi"
+import { DataApi, ErrorApi, NOT_BODYABLE_OPERATIONS, RESOURCE_OPERATIONS, RestResponse } from "./DataApi"
 
 export const REST_METHODS = {
-    GET: 'GET',
-    POST: 'POST',
-    PUT: 'PUT',
-    PATCH: 'PATCH',
-    DELETE: 'DELETE',
-    HEAD: 'HEAD',
-    OPTIONS: 'OPTIONS'
+    [RESOURCE_OPERATIONS.GET_COLLECTION]: 'GET',
+    [RESOURCE_OPERATIONS.POST_COLLECTION]: 'POST',
+    [RESOURCE_OPERATIONS.PUT_COLLECTION]: 'PUT',
+    [RESOURCE_OPERATIONS.PATCH_COLLECTION]: 'PATCH',
+    [RESOURCE_OPERATIONS.DELETE_COLLECTION]: 'DELETE',
+
+    [RESOURCE_OPERATIONS.GET_UNIT]: 'GET',
+    [RESOURCE_OPERATIONS.POST_UNIT]: 'POST',
+    [RESOURCE_OPERATIONS.PUT_UNIT]: 'PUT',
+    [RESOURCE_OPERATIONS.PATCH_UNIT]: 'PATCH',
+    [RESOURCE_OPERATIONS.DELETE_UNIT]: 'DELETE',
+
+    [RESOURCE_OPERATIONS.HEAD]: 'HEAD',
+    [RESOURCE_OPERATIONS.OPTIONS]: 'OPTIONS'
+
+    // GET_COLLECTION = 'GET_COLLECTION',
+    // POST_COLLECTION = 'POST_COLLECTION',
+    // PUT_COLLECTION = 'PUT_COLLECTION',
+    // PATCH_COLLECTION = 'PATCH_COLLECTION',
+    // DELETE_COLLECTION = 'DELETE_COLLECTION',
+    // GET_UNIT = 'GET_UNIT',
+    // POST_UNIT = 'POST_UNIT',
+    // PUT_UNIT = 'PUT_UNIT',
+    // PATCH_UNIT = 'PATCH_UNIT',
+    // DELETE_UNIT = 'DELETE_UNIT',
+    // HEAD = 'HEAD',
+    // OPTIONS = 'OPTIONS'
 }
 
 export interface DataCollectionProps<T extends ServiceState> {
@@ -56,21 +76,21 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
                     isProcessing: false,
                     isProcessed: false
                 } as ResourceState<X>,
-                // [RESOURCE_OPERATIONS.GET_COLLECTION]: {
-                //     data: {},
-                //     isProcessing: false,
-                //     isProcessed: false
-                // } as ResourceState<X>,
-                // [RESOURCE_OPERATIONS.POST_COLLECTION]: {
-                //     data: {},
-                //     isProcessing: false,
-                //     isProcessed: false
-                // } as ResourceState<X>,
-                // [RESOURCE_OPERATIONS.PATCH_COLLECTION]: {
-                //     data: {},
-                //     isProcessing: false,
-                //     isProcessed: false
-                // } as ResourceState<X>
+                [RESOURCE_OPERATIONS.GET_COLLECTION]: {
+                    data: {},
+                    isProcessing: false,
+                    isProcessed: false
+                } as ResourceState<X>,
+                [RESOURCE_OPERATIONS.POST_COLLECTION]: {
+                    data: {},
+                    isProcessing: false,
+                    isProcessed: false
+                } as ResourceState<X>,
+                [RESOURCE_OPERATIONS.PATCH_COLLECTION]: {
+                    data: {},
+                    isProcessing: false,
+                    isProcessed: false
+                } as ResourceState<X>
             }
         })
     }
@@ -94,8 +114,8 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
 
     //get
     dataCollectionIsFound = (hashable: any): boolean => {
-        return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessed
-        // return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.GET_COLLECTION].isProcessed
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessed
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.GET_COLLECTION].isProcessed
     }
 
     dataCollectionIsNotFound = (hashable: any): boolean => {
@@ -103,8 +123,8 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
     }
 
     dataCollectionIsFinding = (hashable: any): boolean => {
-        return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessing
-        // return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.GET_COLLECTION].isProcessing
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessing
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.GET_COLLECTION].isProcessing
     }
 
     dataCollectionIsNotFinding = (hashable: any): boolean => {
@@ -113,8 +133,8 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
 
     //post
     dataCollectionIsCreated = (hashable: any): boolean => {
-        return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessed
-        // return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.POST_COLLECTION].isProcessed
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessed
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.POST_COLLECTION].isProcessed
     }
 
     dataCollectionIsNotCreated = (hashable: any): boolean => {
@@ -122,8 +142,8 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
     }
 
     dataCollectionIsCreating = (hashable: any): boolean => {
-        return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessing
-        // return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.POST_COLLECTION].isProcessing
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessing
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.POST_COLLECTION].isProcessing
     }
 
     dataCollectionIsNotCreating = (hashable: any): boolean => {
@@ -132,8 +152,8 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
 
     //path
     dataCollectionIsPatched = (hashable: any): boolean => {
-        return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessed
-        // return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.PATCH_COLLECTION].isProcessed
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessed
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.PATCH_COLLECTION].isProcessed
     }
 
     dataCollectionIsNotPatched = (hashable: any): boolean => {
@@ -141,8 +161,8 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
     }
 
     dataCollectionIsPatching = (hashable: any): boolean => {
-        return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessing
-        // return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.PATCH_COLLECTION].isProcessing
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessing
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.PATCH_COLLECTION].isProcessing
     }
 
     dataCollectionIsNotPatching = (hashable: any): boolean => {
@@ -150,192 +170,41 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
     }
 
     getDataCollection = (props?: {query?: {}}, callback?: CallableFunction): X[] => {
+        const operation = RESOURCE_OPERATIONS.GET_COLLECTION
         if (this.dataCollectionIsLoading(props)) {
-            return this._accessCurrentDataCollection()
+            return this._accessCurrentDataCollection(operation, props)
         }
-        this._setProcessingState(RESOURCE_OPERATIONS.GET_COLLECTION)
         return this.authenticationService.isAuthorized() ? (() => {
-            const url = new URL(this.url)
-            url.search = new URLSearchParams(props?.query ? props.query : {}).toString();
-            try {
-                fetch(url, {
-                    method: REST_METHODS.GET,
-                    headers: this.authenticationService.getAuthenticatedHeader()
-                })
-                    .then(async (resp) => {
-                            return {
-                                body: (await resp.json()) as X[],
-                                status: resp.status,
-                                originalResponse: resp
-                            } as RestResponse<X[]>
-                    })
-                    .then((restResponse: RestResponse<X[]>) => {
-                        if (restResponse.body instanceof Array<X>) {
-                            this.overrideDataCollection(restResponse.body, RESOURCE_OPERATIONS.GET_COLLECTION)
-                        } 
-                        else {
-                            this._setProcessedState(this.service.getState(), RESOURCE_OPERATIONS.GET_COLLECTION)
-                            informError({
-                                message: restResponse?.body?.message,
-                                details: []
-                            })
-                            if (401 === restResponse.status) {
-                                this.authenticationService.doLogout()
-                            }
-                        }
-                        return restResponse
-                    })
-                    .then((restResponse) => {
-                        if (callback) callback()
-                        return restResponse
-                    })
-                    .catch((error) => {
-                        this._setNotProcessingState(RESOURCE_OPERATIONS.GET_COLLECTION)
-                        informError({
-                            message: 'Unable to find resources',
-                            details: [
-                                {
-                                    key: error.message,
-                                    message: error.message
-                                }
-                            ]
-                        })
-                    })
-            } catch (error: any) {
-                this._setNotProcessingState(RESOURCE_OPERATIONS.GET_COLLECTION)
-                console.log(error)
-            }
-            
-            return this._accessCurrentDataCollection() 
+            this._fetch([], operation, props, callback)
+            return this._accessCurrentDataCollection(operation, props) 
         })() : [] 
     }
 
     
-    postDataCollection = (request: Y[], callback?: CallableFunction): X[] => {
-        if (this.dataCollectionIsCreating(request)) {
+    postDataCollection = (request: Y[], props?: {query?: {}}, callback?: CallableFunction): X[] => {
+        const operation = RESOURCE_OPERATIONS.POST_COLLECTION
+        if (this.dataCollectionIsCreating({request, props})) {
             return []
         }
-        this._setProcessingState(RESOURCE_OPERATIONS.POST_COLLECTION)
         return this.authenticationService.isAuthorized() ? (() => {
-            const url = new URL(this.url)
-            try {
-                fetch(url, {
-                    method: REST_METHODS.POST,
-                    headers: this.authenticationService.getAuthenticatedHeader(),
-                    body: ObjectUtil.toJson(request)
-                })
-                    .then(async (resp) => {
-                            return {
-                                body: (await resp.json()) as X[],
-                                status: resp.status,
-                                originalResponse: resp
-                            } as RestResponse<X[]>
-                    })
-                    .then((restResponse: RestResponse<X[]>) => {
-                        if (restResponse.body instanceof Array<X>) {
-                            this.overrideDataCollection(restResponse.body, RESOURCE_OPERATIONS.POST_COLLECTION)
-                        } 
-                        else {
-                            this._setProcessedState(this.service.getState(), RESOURCE_OPERATIONS.POST_COLLECTION)
-                            informError({
-                                message: restResponse?.body?.message,
-                                details: []
-                            })
-                            if (401 === restResponse.status) {
-                                this.authenticationService.doLogout()
-                            }
-                        }
-                        return restResponse
-                    })
-                    .then((restResponse) => {
-                        if (callback) callback()
-                        return restResponse
-                    })
-                    .catch((error) => {
-                        this._setNotProcessingState(RESOURCE_OPERATIONS.POST_COLLECTION)
-                        informError({
-                            message: 'Unable to post resources',
-                            details: [
-                                {
-                                    key: error.message,
-                                    message: error.message
-                                }
-                            ]
-                        })
-                    })
-            } catch (error: any) {
-                this._setNotProcessingState(RESOURCE_OPERATIONS.POST_COLLECTION)
-                console.log(error)
-            }
-            
+            this._fetch(request, operation, props, callback)
             return []
         })() : [] 
     }
 
     
     patchDataCollection = (request: Y[], props?: {query?: {}}, callback?: CallableFunction): X[] => {
+        const operation = RESOURCE_OPERATIONS.PATCH_COLLECTION
         if (this.dataCollectionIsPatching({request, props})) {
             return []
         }
-        this._setProcessingState(RESOURCE_OPERATIONS.PATCH_COLLECTION)
         return this.authenticationService.isAuthorized() ? (() => {
-            const url = new URL(this.url)
-            url.search = new URLSearchParams(props?.query ? props.query : {}).toString();
-            try {
-                fetch(url, {
-                    method: REST_METHODS.PATCH,
-                    headers: this.authenticationService.getAuthenticatedHeader(),
-                    body: ObjectUtil.toJson(request)
-                })
-                    .then(async (resp) => {
-                            return {
-                                body: (await resp.json()) as X[],
-                                status: resp.status,
-                                originalResponse: resp
-                            } as RestResponse<X[]>
-                    })
-                    .then((restResponse: RestResponse<X[]>) => {
-                        if (restResponse.body instanceof Array<X>) {
-                            this.overrideDataCollection(restResponse.body, RESOURCE_OPERATIONS.PATCH_COLLECTION)
-                        } 
-                        else {
-                            this._setProcessedState(this.service.getState(), RESOURCE_OPERATIONS.PATCH_COLLECTION)
-                            informError({
-                                message: restResponse?.body?.message,
-                                details: []
-                            })
-                            if (401 === restResponse.status) {
-                                this.authenticationService.doLogout()
-                            }
-                        }
-                        return restResponse
-                    })
-                    .then((restResponse) => {
-                        if (callback) callback()
-                        return restResponse
-                    })
-                    .catch((error) => {
-                        this._setNotProcessingState(RESOURCE_OPERATIONS.PATCH_COLLECTION)
-                        informError({
-                            message: 'Unable to patch resources',
-                            details: [
-                                {
-                                    key: error.message,
-                                    message: error.message
-                                }
-                            ]
-                        })
-                    })
-            } catch (error: any) {
-                this._setNotProcessingState(RESOURCE_OPERATIONS.PATCH_COLLECTION)
-                console.log(error)
-            }
-            
+            this._fetch(request, operation, props, callback)
             return []
         })() : [] 
     }
 
-    overrideDataCollection = (dataCollection: X[], operation = RESOURCE_OPERATIONS.GET_COLLECTION) => {
+    overrideDataCollection = (dataCollection: X[], operation: RESOURCE_OPERATIONS) => {
         const currentState = this.service.getState()
         dataCollection.forEach((data: X) => {
             if (!!!data.key) {
@@ -343,59 +212,116 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
                 console.warn(`data should have a non null key. Guiving it a temporary key: ${data.key}`)
                 console.warn(data)
             }
-            // currentState[this.stateName][operation].data[data.key] = {...data}
             currentState[this.stateName][COLLECTION_STATE_KEY].data[data.key] = {...data}
         });
-        // this._updateResourceState(this.service.getState(), operation, {isProcessed: true, isProcessing: false})
         this._setProcessedState(currentState, operation)
         return this._accessStateDataCollectionValues(currentState[this.stateName][COLLECTION_STATE_KEY])
     }
 
     accessCachedDataCollection = (props?: {query?: {}}, operation = RESOURCE_OPERATIONS.GET_COLLECTION): X[] => {
         return this.authenticationService.isAuthorized() ? (() => {
-            // return this._accessCurrentDataCollection(operation)
-            return this.dataCollectionIsLoaded(props) ? this._accessCurrentDataCollection(props, operation) : this.getDataCollection(props?.query ? {query: props.query} : {})
+            return this.dataCollectionIsLoaded(props) ? this._accessCurrentDataCollection(operation, props) : this.getDataCollection(props?.query ? {query: props.query} : {})
         })() : [] 
     }
 
-    _setProcessingState = (operation = RESOURCE_OPERATIONS.GET_COLLECTION) => {
-        // this._updateResourceState(this.service.getState(), operation, {isProcessing: true}) 
-        this._updateResourceState(this.service.getState(), COLLECTION_STATE_KEY, {isProcessing: true}) 
+    _fetch = (request: Y[], operation: RESOURCE_OPERATIONS, props?: {query?: {}}, callback?: CallableFunction) => {
+        this._setProcessingState(operation)
+        try {
+            const url = new URL(this.url)
+            url.search = new URLSearchParams(props?.query ? props.query : {}).toString();
+            const body = ObjectUtil.inIt(operation, NOT_BODYABLE_OPERATIONS) ? {} : {body: ObjectUtil.toJson(request)}
+            fetch(url, {
+                ...{
+                    method: REST_METHODS[operation],
+                    headers: this.authenticationService.getAuthenticatedHeader(),
+                },
+                ...body
+            })
+                .then(async (resp) => {
+                    return {
+                        body: (await resp.json()) as (X[] | ErrorApi),
+                        status: resp.status,
+                        originalResponse: resp
+                    } as RestResponse<X[]>
+                })
+                .then((restResponse: RestResponse<X[]>) => {
+                    console.log(restResponse)
+                    if (400 > restResponse.status && restResponse.body instanceof Array<X>) {
+                        if (restResponse.body instanceof Array<X>) {
+                            this.overrideDataCollection(restResponse.body, operation)
+                        } else {
+                            this._setNotProcessingState(operation)
+                        }
+                    } else {
+                        this._setProcessedState(this.service.getState(), operation)
+                        if (!(restResponse.body instanceof Array<X>)) {
+                            informError({
+                                message: restResponse?.body?.message,
+                                details: []
+                            })
+                        }
+                        if (401 === restResponse.status) {
+                            this.authenticationService.doLogout()
+                        }
+                    }
+                    return restResponse
+                })
+                .then((restResponse) => {
+                    if (callback) callback()
+                    return restResponse
+                })
+                .catch((error) => {
+                    informError({
+                        message: `Unable to ${operation.toLocaleLowerCase()} resources`,
+                        details: [
+                            {
+                                key: error.message,
+                                message: error.message
+                            }
+                        ]
+                    })
+                    this._setProcessedState(this.service.getState(), operation)
+                })
+        } catch (error: any) {
+            this._setProcessedState(this.service.getState(), operation)
+            console.log(error)
+        }
     }
 
-    _setNotProcessingState = (operation = RESOURCE_OPERATIONS.GET_COLLECTION) => {
-        // this._updateResourceState(this.service.getState(), operation, {isProcessing: true}) 
-        this._updateResourceState(this.service.getState(), COLLECTION_STATE_KEY, {isProcessing: false}) 
+    _setProcessingState = (operation: RESOURCE_OPERATIONS) => {
+        const statePatch = {isProcessing: true}
+        this._updateResourceState(this.service.getState(), operation, statePatch) 
     }
 
-    _setProcessedState = (currentState: T | any, operation = RESOURCE_OPERATIONS.GET_COLLECTION) => {
-        // this._updateResourceState(currentState, operation, {isProcessed: true, isProcessing: false}) 
-        this._updateResourceState(currentState, COLLECTION_STATE_KEY, {isProcessed: true, isProcessing: false}) 
+    _setNotProcessingState = (operation: RESOURCE_OPERATIONS) => {
+        const statePatch = {isProcessing: false}
+        console.log('here before')
+        this._updateResourceState(this.service.getState(), operation, statePatch) 
+        console.log('here after')
     }
 
-    _updateResourceState = (currentState: T | any, operation: string, statePatch: object) => {
-        // const mergedState = {...this._mergeResourceState(currentState, operation, statePatch)}
-        // console.log(operation)
-        // console.log(this._mergeResourceState(currentState, COLLECTION_STATE_KEY, statePatch))
-        // this.service.setState({[this.stateName]: this._mergeResourceState(currentState, operation, statePatch)})
+    _setProcessedState = (currentState: T, operation: RESOURCE_OPERATIONS) => {
+        const statePatch = {isProcessed: true, isProcessing: false}
+        this._updateResourceState(currentState, operation, statePatch) 
+    }
+
+    _updateResourceState = (currentState: T, operation: RESOURCE_OPERATIONS, statePatch: object) => {
+        console.log(operation)
+        console.log(statePatch)
+        this.service.setState({[this.stateName]: this._mergeResourceState(currentState, operation, statePatch)})
         return this.service.setState({[this.stateName]: this._mergeResourceState(currentState, COLLECTION_STATE_KEY, statePatch)})
     }
 
-    _mergeResourceState = (currentState: T | any, operation: string, statePatch: object) => {
+    _mergeResourceState = (currentState: T, operation: string, statePatch: object) => {
         return {...currentState[this.stateName], ...{[operation]: {...currentState[this.stateName][operation], ...statePatch}}}
     }
 
-    _accessCurrentDataCollection = (props?: {query?: {}}, operation = RESOURCE_OPERATIONS.GET_COLLECTION): X[] => {
-        // return this._accessStateDataCollectionValues(this.service.getState()[this.stateName][operation])
-        // if (this.dataCollectionIsNotLoading(props)) {
-        //     setTimeout(() => {
-        //         this._updateResourceState(this.service.getState(), COLLECTION_STATE_KEY, {})
-        //     }, 1000)
-        // }
+    _accessCurrentDataCollection = (operation: RESOURCE_OPERATIONS, props?: {query?: {}}): X[] => {
         return this._accessStateDataCollectionValues(this.service.getState()[this.stateName][COLLECTION_STATE_KEY])
     }
 
     _accessStateDataCollectionValues = (stateData: any): X[] => {
+        console.log(stateData)
         return Object.values(stateData.data)
     } 
 }
