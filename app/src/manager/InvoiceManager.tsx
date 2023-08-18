@@ -40,7 +40,6 @@ const getInvoiceQueryApi = (props: InvoiceQueryApiProps): InvoiceQueryApi => {
     } 
 }
 
-
 export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implements InvoiceManagerProps {
     
     styleService: StyleService
@@ -63,17 +62,19 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         } as InvoiceManagerStateProps
     }
 
-    pushSelectedPurchasesKey = (key: string) => {
+    pushSelectedPurchaseKey = (key: string) => {
         const selectedPurchaseKeys = this.getSelectedPurchaseKeys()
-        const keyIndex = selectedPurchaseKeys.indexOf(key)
-        selectedPurchaseKeys.push(key)
+        ObjectUtil.pushItIfNotIn(key, selectedPurchaseKeys)
+        // const keyIndex = selectedPurchaseKeys.indexOf(key)
+        // selectedPurchaseKeys.push(key)
         this.setState({selectedPurchaseKeys: selectedPurchaseKeys})
     }
 
-    popSelectedPurchasesKey = (key: string) => {
+    popSelectedPurchaseKey = (key: string) => {
         const selectedPurchaseKeys = this.getSelectedPurchaseKeys()
-        const keyIndex = selectedPurchaseKeys.indexOf(key)
-        selectedPurchaseKeys.splice(keyIndex, 1)
+        ObjectUtil.popIt(key, selectedPurchaseKeys)
+        // const keyIndex = selectedPurchaseKeys.indexOf(key)
+        // selectedPurchaseKeys.splice(keyIndex, 1)
         this.setState({selectedPurchaseKeys: selectedPurchaseKeys})
     }
 
@@ -84,14 +85,14 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
     }
 
     isSelectedPurchaseKey = (key: string) => {
-        return 0 <= this.getSelectedPurchaseKeys().indexOf(key)
+        return ObjectUtil.inIt(key, this.getSelectedPurchaseKeys())
     }
 
     updateSelectedPurchaseKeys = (key: string) => {
         if (this.isSelectedPurchaseKey(key)) {
-            this.popSelectedPurchasesKey(key)
+            this.popSelectedPurchaseKey(key)
         } else {
-            this.pushSelectedPurchasesKey(key)
+            this.pushSelectedPurchaseKey(key)
         }
     }
 

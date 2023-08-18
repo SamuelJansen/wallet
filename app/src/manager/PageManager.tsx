@@ -29,7 +29,9 @@ export class PageManager extends ContexState<PageManagerStateProps> implements P
     investmentManager: InvestmentManager
     creditCardManager: CreditCardManager
     
-    pages: any
+    pages: {
+        [key: string]: any
+    }
     
     constructor(props: PageManagerProps) {
         super()
