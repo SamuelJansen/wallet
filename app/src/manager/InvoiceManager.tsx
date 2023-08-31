@@ -1,20 +1,26 @@
 import { ContexState, ManagerState } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
-import { InstallmentApi, InvoiceApi, InvoiceQueryApi, InvoiceService, PurchaseApi } from "../service/InvoiceService";
+import { InstallmentApi, InvoiceApi, InvoiceQueryApi, InvoiceService } from "../service/InvoiceService";
 import { DateTimeUtil } from "../util/DateTimeUtil";
 import { CreditCardApi } from "../service/CreditCardService";
 import { ResourceManager } from "./ResourceManager";
 import { PageService } from "../service/PageService";
 import { ObjectUtil } from "../util/ObjectUtil";
+import { CreditCardManager } from "./CreditCardManager";
+import { PurchaseRequestApi, PurchaseService } from "../service/PurchaseService";
+import { PurchaseOperations } from "../component/purchases/PurchaseOperations";
 
 export interface InvoiceManagerStateProps extends ManagerState {
     date: Date
+    creditCardDateCollection: Map<string, Date>
     selectedPurchaseKeys: string[]
+    inNewPurchase: boolean
 }
 
 export interface InvoiceManagerProps {
     styleService: StyleService
     pageService: PageService
+    purchaseService: PurchaseService
     invoiceService: InvoiceService
     resourceManager: ResourceManager
 }
@@ -35,47 +41,52 @@ interface InstallmentAtGroupedInstallmentsApi {
 
 const getInvoiceQueryApi = (props: InvoiceQueryApiProps): InvoiceQueryApi => {
     return {
-        creditCardKeyList: props.creditCardList.map((creditCard: CreditCardApi) => creditCard.key).filter(key => !!key),
+        creditCardKeyList: props.creditCardList.map((creditCard: CreditCardApi) => creditCard.key).filter(key => ObjectUtil.isNotEmpty(key)),
         date: DateTimeUtil.toRestDate(props.date)
-    } 
+    }
 }
 
 export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implements InvoiceManagerProps {
-    
+
     styleService: StyleService
     pageService: PageService
+    purchaseService: PurchaseService
     invoiceService: InvoiceService
     resourceManager: ResourceManager
-    
+    creditCardManager?: CreditCardManager
+
     constructor(props: InvoiceManagerProps) {
         super()
         this.styleService = props.styleService
         this.pageService = props.pageService
+        this.purchaseService = props.purchaseService
         this.invoiceService = props.invoiceService
         this.resourceManager = props.resourceManager
         this.state = {
             ...this.state,
             ...{
-                date: new Date(),
-                selectedPurchaseKeys: []
+                date: DateTimeUtil.dateNow(),
+                creditCardDateCollection: new Map<string, Date>(),
+                selectedPurchaseKeys: [],
+                inNewPurchase: false
             }
         } as InvoiceManagerStateProps
+    }
+
+    setCreditCardManager = (creditCardManager: CreditCardManager) => {
+        this.creditCardManager = creditCardManager
     }
 
     pushSelectedPurchaseKey = (key: string) => {
         const selectedPurchaseKeys = this.getSelectedPurchaseKeys()
         ObjectUtil.pushItIfNotIn(key, selectedPurchaseKeys)
-        // const keyIndex = selectedPurchaseKeys.indexOf(key)
-        // selectedPurchaseKeys.push(key)
-        this.setState({selectedPurchaseKeys: selectedPurchaseKeys})
+        this.setState({ selectedPurchaseKeys: selectedPurchaseKeys })
     }
 
     popSelectedPurchaseKey = (key: string) => {
         const selectedPurchaseKeys = this.getSelectedPurchaseKeys()
         ObjectUtil.popIt(key, selectedPurchaseKeys)
-        // const keyIndex = selectedPurchaseKeys.indexOf(key)
-        // selectedPurchaseKeys.splice(keyIndex, 1)
-        this.setState({selectedPurchaseKeys: selectedPurchaseKeys})
+        this.setState({ selectedPurchaseKeys: selectedPurchaseKeys })
     }
 
     getSelectedPurchaseKeys = () => {
@@ -96,16 +107,166 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         }
     }
 
-    getDate = () => {
-        return this.getState().date
+    getDate = (props?: { creditCardKey: string | null }): Date => {
+        const possibleDate = props?.creditCardKey ? this.getState().creditCardDateCollection.get(props.creditCardKey) : this.getState().date
+        return DateTimeUtil.ofDate(possibleDate ? possibleDate : this.getState().date)
     }
 
-    setDate = (givenInvoiceDate: Date) => {
-        this.setState({date: givenInvoiceDate})
+    setDate = (invoiceDate: Date, props?: { creditCardKey: string | null }): void => {
+        if (props?.creditCardKey) {
+            this.getState().creditCardDateCollection.set(props.creditCardKey, DateTimeUtil.ofDate(invoiceDate))
+            this.setState({ creditCardDateCollection: this.getState().creditCardDateCollection })
+        }
+        else {
+            this.setState({ date: DateTimeUtil.ofDate(invoiceDate) })
+        }
     }
 
-    getInvoices = (props: InvoiceQueryApiProps) => {
+    getInvoices = (props: InvoiceQueryApiProps): InvoiceApi[] => {
         return this.invoiceService.getInvoices(getInvoiceQueryApi(props))
+    }
+
+    newPurchase = (props: { purchaseRequest: PurchaseRequestApi, creditCardRequest: CreditCardApi }) => {
+        const {
+            purchaseRequest,
+            creditCardRequest
+        } = {...props}
+        return this.purchaseService.newPurchaseCollection([purchaseRequest], { callback: () => this.renewInvoices({ creditCardRequest }) })
+    }
+
+    revertPurchase = (props: { purchaseRequest: PurchaseRequestApi, creditCardRequest: CreditCardApi }) => {
+        const {
+            purchaseRequest,
+            creditCardRequest
+        } = {...props}
+        this.purchaseService.revertPurchaseCollection([purchaseRequest], { callback: () => this.renewInvoices({ creditCardRequest }) })
+    }
+
+    renewInvoices = (props: { creditCardRequest: CreditCardApi }): void => {
+        this.invoiceService.resetState({creditCardKeyList: [props.creditCardRequest.key]})
+        if (props.creditCardRequest.key) {
+            this.getInvoices({
+                creditCardList: [props.creditCardRequest],
+                date: this.getDate({ creditCardKey: props.creditCardRequest.key })
+            })
+            this.creditCardManager?.getCreditCards({ keyList: [props.creditCardRequest.key], date: this.getDate({ creditCardKey: props.creditCardRequest.key }) })
+        }
+    }
+
+    renderInvoices = (props: InvoiceRenderProps) => {
+        const groupedInstallments: InstallmentAtGroupedInstallmentsApi = this.invoiceService.getInvoicesState()
+            .filter((invoice: InvoiceApi) => props.creditCard.key === invoice.creditCard.key)
+            .flatMap((invoice: InvoiceApi) => {
+                return invoice.installmentList
+            })
+            .reduce((acc, installment) => {
+                (acc[installment.installmentAt] = acc[installment.installmentAt] || []).push(installment);
+                return acc;
+            }, {} as InstallmentAtGroupedInstallmentsApi)
+        // https://reactcommunity.org/react-transition-group/css-transition
+        // import { CSSTransition } from 'react-transition-group';
+        // CSSTransition
+        return ObjectUtil.iterateOver(groupedInstallments).map((installmentAt: string, index: number) => {
+            return <div
+                key={installmentAt}
+                style={{
+                    width: '100%',
+                    fontSize: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'left'
+                }}
+            >
+                <div
+                    className='text-gray-500 mx-2'
+                    style={{
+                        fontSize: '10px'
+                    }}
+                >
+                    {DateTimeUtil.toUserDate(installmentAt)}
+                </div>
+                {
+                    groupedInstallments[installmentAt].map((installment: InstallmentApi) => {
+                        const valueColor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-gray-100'
+                        return (
+                            <div
+                                key={`${installment.key}`}
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <div
+                                    className={`${valueColor}`}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        margin: '0 0 10px 0',
+                                        backgroundColor: '#222',
+                                        borderRadius: '5px',
+                                        boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
+                                        textAlign: 'center',
+                                        fontSize: '14px',
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    onClick={() => {
+                                        this.updateSelectedPurchaseKeys(installment.purchaseKey)
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            width: '100%',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'left'
+
+                                        }}
+                                    >
+                                        <div>
+                                            {installment.label}
+                                        </div>
+                                        <div
+                                            style={{
+                                                padding: '0 4px 0 4px'
+                                            }}
+                                        ></div>
+                                    </div>
+                                    <div
+                                        className='text-gray-500'
+                                        style={{
+                                            margin: '4px 0 0 0',
+                                            fontSize: '10px',
+                                        }}
+                                    >
+                                        {1 === installment.purchase.installments ? `` : `${installment.order + 1}/${installment.purchase.installments}`}
+                                    </div>
+                                    <div
+                                        style={{
+                                            width: '100px',
+                                            display: 'flex',
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <div>R$ {installment.value}</div>
+                                    </div>
+                                </div>
+                                {this.renderInstallments({ valueColor, installment, creditCard: props.creditCard})}
+                            </div>
+                        )
+                    })
+                }
+            </div>
+        })
     }
 
     renderInvoiceDetails = (props: InvoiceRenderProps) => {
@@ -146,217 +307,112 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                         marginBottom: '10px',
                         fontSize: '20px'
                     }}
-                >Invoice: R$ { invoiceIsPresent ? -invoice.value : '...'}</div>
+                >Invoice: R$ {invoiceIsPresent ? -invoice.value : '...'}</div>
             </>
-        ) 
+        )
     }
 
-    renderInvoices = (props: InvoiceRenderProps) => {
-        const groupedInstallments: InstallmentAtGroupedInstallmentsApi = this.invoiceService.getInvoicesState()
-            .filter((invoice: InvoiceApi) => props.creditCard.key === invoice.creditCard.key)
-            .flatMap((invoice: InvoiceApi) => {
-                return invoice.installmentList
-            })
-            .reduce((acc, installment) => {
-                (acc[installment.installmentAt] = acc[installment.installmentAt] || []).push(installment);
-                return acc;
-            }, {} as InstallmentAtGroupedInstallmentsApi)
-        
-        return ObjectUtil.iterateOver(groupedInstallments).map((key: string, index: number) => {
-            return <div
-                key={key}
-                style={{
-                    width: '100%',
-                    fontSize: '14px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'left'
-                }}
-            >
+    renderInstallments = (props: { valueColor: string, installment: InstallmentApi, creditCard: CreditCardApi }) => {
+        return (
+            ObjectUtil.containsIt(props.installment.purchaseKey, this.getSelectedPurchaseKeys()) ?
                 <div
-                    className='text-gray-500 mx-2'
+                    className={`${props.valueColor}`}
                     style={{
-                        fontSize: '10px'
+                        width: '100%',
+                        padding: '0 10px 10px 10px',
+                        margin: '0 0 10px 0',
+                        textAlign: 'center',
+                        fontSize: '14px',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                     }}
-                >{DateTimeUtil.toUserDate(key)}</div>
-                {
-                    groupedInstallments[key].map((installment: InstallmentApi) => {
-                        const textCollor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-gray-100'
-                        return (
-                            <div
-                                key={`${installment.key}`}
-                                style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            >   
-                                <div 
-                                    className={`${textCollor}`}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        margin: '0 0 10px 0',
-                                        backgroundColor: '#222',
-                                        borderRadius: '5px',
-                                        boxShadow: '0 0 5px rgba(255, 255, 255, 0.1)',
-                                        textAlign: 'center',
-                                        fontSize: '14px',
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                    onClick={() => {
-                                        this.updateSelectedPurchaseKeys(installment.purchaseKey)
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            width: '100%',
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            justifyContent: 'left'
-            
-                                        }}
-                                    >
-                                        <div>
-                                            {installment.label}
-                                        </div>
-                                        <div
-                                            style={{
-                                                padding: '0 4px 0 4px'
-                                            }}
-                                        ></div>
-                                    </div>
-                                    <div
-                                        className='text-gray-500'
-                                        style={{
-                                            margin: '4px 0 0 0',
-                                            fontSize: '10px',
-                                        }}
-                                    >
-                                        {1 === installment.purchase.installments ? `` : `${installment.order + 1}/${installment.purchase.installments}`}
-                                    </div> 
-                                    <div
-                                        style={{
-                                            width: '100px',
-                                            display: 'flex',
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
-                                    >
-                                        <div>R$ {installment.value}</div>
-                                    </div>
-                                </div>
-                                {
-                                    this.getSelectedPurchaseKeys()[this.getSelectedPurchaseKeys().indexOf(installment.purchaseKey)] ? 
-                                    <div
-                                        className={`${textCollor}`}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0 10px 10px 10px',
-                                            margin: '0 0 10px 0',
-                                            textAlign: 'center',
-                                            fontSize: '14px',
-                                            display: 'flex',
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
-                                    >
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                width: '100%',
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                justifyContent: 'left'
-                
-                                            }}
-                                        >
-                                            <div>
-                                                {installment.purchase.label}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    padding: '0 4px 0 4px'
-                                                }}
-                                            ></div>
-                                        </div>
-                                        <div
-                                            style={{
-                                                width: '100%',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            <div
-                                                className='text-gray-500'
-                                                style={{
-                                                    display: 'flex',
-                                                    width: '100%',
-                                                    fontSize: '10px',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'right'
-                                                }}
-                                            >
-                                                Bought at: {DateTimeUtil.toUserDate(installment.purchase.purchaseAt)}
-                                            </div>
-                                            <div
-                                                className='text-gray-500'
-                                                style={{
-                                                    display: 'flex',
-                                                    width: '100%',
-                                                    fontSize: '10px',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'right'
-                                                }}
-                                            >
-                                                Instalments: {installment.purchase.installments}
-                                            </div> 
-                                        </div>
-                                        <div
-                                            style={{
-                                                width: '100px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    width: '90px'
-                                                }}
-                                            >R$ {installment.purchase.value}</div>
-                                            <div>
-                                                {
-                                                    this.resourceManager.renderInvoiceOperations(installment, () => {
-                                                        this.pageService.getManager()?.reRenderSelectedPage()
-                                                    })
-                                                }
-                                            </div>
-                                        </div>
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            width: '100%',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'left'
 
-                                    </div> : <></>
-                                }
+                        }}
+                    >
+                        <div>
+                            {props.installment.purchase.label}
+                        </div>
+                        <div
+                            style={{
+                                padding: '0 4px 0 4px'
+                            }}
+                        ></div>
+                    </div>
+                    <div
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <div
+                            className='text-gray-500'
+                            style={{
+                                display: 'flex',
+                                width: '100%',
+                                fontSize: '10px',
+                                alignItems: 'center',
+                                justifyContent: 'right'
+                            }}
+                        >
+                            Bought at: {DateTimeUtil.toUserDate(props.installment.purchase.purchaseAt)}
+                        </div>
+                        <div
+                            className='text-gray-500'
+                            style={{
+                                display: 'flex',
+                                width: '100%',
+                                fontSize: '10px',
+                                alignItems: 'center',
+                                justifyContent: 'right'
+                            }}
+                        >
+                            Instalments: {props.installment.purchase.installments}
+                        </div>
+                    </div>
+                    <div
+                        style={{
+                            width: '100px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: '90px'
+                            }}
+                        >R$ {props.installment.purchase.value}</div>
+                        {/* <div>
+                            {
+                                this.resourceManager.renderInstallmentOperations(props.installment, () => {
+                                    this.renewInvoices({
+                                        creditCard: props.installment.purchase.creditCard
+                                    })
+                                    this.pageService.getManager()?.reRenderSelectedPage()
+                                })
+                            }
+                        </div> */}
+                        <PurchaseOperations
+                            installment={props.installment}
+                            creditCard={props.creditCard}
+                        />
+                    </div>
 
-
-                            </div>                            
-                        )
-                    })
-                } 
-            </div>
-        })
-    
-            
+                </div> : <></>
+        )
     }
 }
 

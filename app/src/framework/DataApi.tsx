@@ -7,9 +7,13 @@ export interface ErrorApi {
     message: string | null
 }
 
+export function isErrorApi(instance: any) : instance is ErrorApi {
+    return 'message' in instance
+}
+
 export interface RestResponse<B> {
     originalResponse: any
-    body: ErrorApi | B
+    body: ErrorApi | B | Array<B>
     status: number
 }
 

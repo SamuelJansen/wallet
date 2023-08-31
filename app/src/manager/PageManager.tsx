@@ -6,6 +6,8 @@ import { PAGES, PageService } from "../service/PageService"
 import { BalanceManager } from "../manager/BalanceManager"
 import { InvestmentManager } from "../manager/InvestmentManager"
 import { CreditCardManager } from './CreditCardManager'
+import { Bank, CreditCard } from 'phosphor-react'
+import { ObjectUtil } from '../util/ObjectUtil'
 
 
 export interface PageManagerStateProps extends ManagerState {
@@ -80,10 +82,25 @@ export class PageManager extends ContexState<PageManagerStateProps> implements P
                 <ToggleGroup.Item
                     key={index} 
                     value={pageName}
-                    className={`w-[100px] h-full mr-4 ${this.pageService.isSelectedPage(pageName) ? this.styleService.getTWBorder() : ''} flex justify-center items-center ${this.styleService.getTWTextColor()}`}
+                    // className={`w-[50px] h-full mr-4 ${this.pageService.isSelectedPage(pageName) ? this.styleService.getTWBorder() : ''} flex justify-center items-center ${this.styleService.getTWTextColor()}`}
+                    className={`w-[30px] h-full mr-4 flex justify-center items-center ${this.styleService.getTWTextColor()}`}
                     onClick={() => this.pages[pageName].getData() }
                 >
-                    <span>{pageName}</span>
+                    {
+                        ObjectUtil.equals(PAGES.CREDIT_CARD_PAGE_NAME, pageName) ?
+                        <CreditCard 
+                            id={'access-credit-card'}
+                            key={pageName}
+                            size={this.styleService.getIconSize()} 
+                            color={this.pageService.isSelectedPage(pageName) ? this.styleService.getMainButtonColor() : this.styleService.getBasicButtonColor()}
+                        /> :
+                        <Bank
+                            key={pageName}
+                            id={'access-balance'}
+                            size={this.styleService.getIconSize()} 
+                            color={this.pageService.isSelectedPage(pageName) ? this.styleService.getMainButtonColor() : this.styleService.getBasicButtonColor()}
+                        />
+                    }
                 </ToggleGroup.Item>
             )
         })

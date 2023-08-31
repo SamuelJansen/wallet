@@ -1,8 +1,8 @@
 import { useContext } from 'react';
 import { AppContext, AppContextProps } from '../../context/AppContext';
-import { TOPBAR_DIMMENTONS } from '../topbar/TopbarComponent';
 import { GoogleLoginComponent } from './GoogleLoginComponent';
 import { LoggedUserDataComponent } from './LoggedUserDataComponent';
+import { TOPBAR_DIMMENTONS } from '../../service/StyleService';
 
 
 export const AuthenticationComponent = () => {

@@ -1,7 +1,6 @@
 import { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { BORDER_WIDTH, TOPBAR_DIMMENTONS } from '../topbar/TopbarComponent';
-import { StyleService } from '../../service/StyleService'
+import { BORDER_WIDTH, StyleService, TOPBAR_DIMMENTONS } from '../../service/StyleService'
 import { AuthenticationService } from '../../service/AuthenticationService'
 
 export const LoggedUserDataComponent = () => {

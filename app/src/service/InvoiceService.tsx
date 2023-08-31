@@ -2,9 +2,11 @@ import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
-import { DataCollectionExecutor } from "../framework/DataCollectionExecutor";
-import { DataApi } from "../framework/DataApi";
+import { CollectionStateProps, ContexServiceState, DataCollectionExecutor } from "../framework/DataCollectionExecutor";
+import { DataApi, RESOURCE_OPERATIONS } from "../framework/DataApi";
 import { CreditCardApi } from "./CreditCardService";
+import { ObjectUtil } from "../util/ObjectUtil";
+import { PurchaseApi } from "./PurchaseService";
 
 
 const HTTPS_SCHEMA = `https`
@@ -33,16 +35,6 @@ export enum INSTALLMENT_STATUS {
     NONE = "NONE"
 }
 
-export interface PurchaseApi extends DataApi {
-    label: string,
-    value: number,
-    purchaseAt: string,
-    installments: number,
-    creditCard: CreditCardApi,
-    creditCardKey: string,
-    installmentList: InstallmentApi[]
-}
-
 export interface InstallmentApi extends DataApi {
     installmentAt: string,
     installments: number,
@@ -68,28 +60,25 @@ export interface InvoiceRequestApi extends DataApi {
 export interface InstallmentRequestApi extends DataApi {
 }
 
-export interface InvoicesServiceStateProps extends ServiceState {
-    [key: string]: InvoiceApi
+export interface InvoiceServiceStateProps extends ContexServiceState<InvoiceApi> {
+    invoices: CollectionStateProps<InvoiceApi>
 }
 
-export interface InstallmentsServiceStateProps extends ServiceState {
-    [key: string]: InstallmentApi
-}
-
-export interface InvoiceServiceStateProps extends ServiceState {
-    invoices: InvoicesServiceStateProps,
-    instalments: InstallmentsServiceStateProps
+export interface InstallmenteServiceStateProps extends ContexServiceState<InstallmentApi> {
+    instalments: CollectionStateProps<InstallmentApi>
 }
 
 export interface InvoiceServiceProps {
     authenticationService: AuthenticationService
+    invoicesCollectionExecutor: DataCollectionExecutor<InvoiceApi, InvoiceRequestApi>
+    instalmentsCollectionExecutor: DataCollectionExecutor<InstallmentApi, InstallmentRequestApi>
 }
 
-export class InvoiceService extends ContexState<InvoiceServiceStateProps> implements InvoiceServiceProps {
+export class InvoiceService extends ContexState<InvoiceServiceStateProps | InstallmenteServiceStateProps> implements InvoiceServiceProps {
 
     authenticationService: AuthenticationService
-    invoicesCollectionExecutor: DataCollectionExecutor<InvoicesServiceStateProps, InvoiceApi, InvoiceRequestApi>
-    instalmentsCollectionExecutor: DataCollectionExecutor<InstallmentsServiceStateProps, InstallmentApi, InstallmentRequestApi>
+    invoicesCollectionExecutor: DataCollectionExecutor<InvoiceApi, InvoiceRequestApi>
+    instalmentsCollectionExecutor: DataCollectionExecutor<InstallmentApi, InstallmentRequestApi>
 
     constructor(props: InvoiceServiceProps) {
         super()
@@ -97,18 +86,42 @@ export class InvoiceService extends ContexState<InvoiceServiceStateProps> implem
         this.state = {
             ...this.state
         } as InvoiceServiceStateProps
-        this.invoicesCollectionExecutor = new DataCollectionExecutor<InvoicesServiceStateProps, InvoiceApi, InvoiceRequestApi>({
+        this.invoicesCollectionExecutor = new DataCollectionExecutor<InvoiceApi, InvoiceRequestApi>({
             url: `${API_BASE_URL}/invoice/all`, 
             stateName: `invoices`, 
-            service: this,
+            service: this as ContexState<InvoiceServiceStateProps>,
             authenticationService: this.authenticationService
         })
-        this.instalmentsCollectionExecutor = new DataCollectionExecutor<InstallmentsServiceStateProps, InstallmentApi, InstallmentRequestApi>({
+        this.instalmentsCollectionExecutor = new DataCollectionExecutor<InstallmentApi, InstallmentRequestApi>({
             url: `${API_BASE_URL}/installment/all`, 
             stateName: `instalments`, 
-            service: this,
+            service: this as ContexState<InstallmenteServiceStateProps>,
             authenticationService: this.authenticationService
         })
+    }
+
+    resetState = (props: {creditCardKeyList: Array<string | null>}) => {
+        if (ObjectUtil.isEmpty(props.creditCardKeyList)) {
+            this.invoicesCollectionExecutor.clearDataCollection()
+            this.instalmentsCollectionExecutor.clearDataCollection()
+        } else {
+            this.resetInvoiceState({creditCardKeyList: props.creditCardKeyList})
+            this.resetInstalmmentState({creditCardKeyList: props.creditCardKeyList})
+        }
+    }
+
+    resetInvoiceState = (props: {creditCardKeyList: Array<string | null>}) => {
+        const invoiceListCopy: Array<InvoiceApi> = this.invoicesCollectionExecutor.accessDataCollection()
+        for (let invoice of invoiceListCopy) {
+            if (ObjectUtil.containsIt(invoice.creditCard.key, props.creditCardKeyList)) {
+                ObjectUtil.popIt(invoice, invoiceListCopy)
+            }
+        }
+        this.invoicesCollectionExecutor.overrideDataCollectionWithPossibleLoss(invoiceListCopy, RESOURCE_OPERATIONS.GET_COLLECTION)
+    }
+    
+    resetInstalmmentState = (props: {creditCardKeyList: Array<string | null>}) => {
+        // console.log(this.getState().instalments)
     }
 
     getInvoicesState = (query?: InvoiceQueryApi) : InvoiceApi[] => {
@@ -123,9 +136,9 @@ export class InvoiceService extends ContexState<InvoiceServiceStateProps> implem
         } : {})
     }
 
-    proccessAll = (query?: InstallmentQueryApi, callback?: CallableFunction) : InstallmentApi[] => {
-        return this.instalmentsCollectionExecutor.patchDataCollection(
-            [], 
+    newPurchase = (purchase: PurchaseApi, query?: InstallmentQueryApi, callback?: CallableFunction) => {
+        return this.instalmentsCollectionExecutor.postDataCollection(
+            [purchase], 
             query ? {
                 query: query
             } : {},

@@ -5,13 +5,13 @@ import { DateTimeUtil } from "../util/DateTimeUtil";
 import { InvoiceManager } from "./InvoiceManager";
 import { ResourceManager } from "./ResourceManager";
 import { ObjectUtil } from "../util/ObjectUtil";
-import { CreditCard } from "phosphor-react";
+import { CreditCardOperations } from "../component/credit-card/CreditCardOperations";
 
 export interface CreditCardManagerStateProps extends ManagerState {
     accessibleCreditCardKeys: string[]
+    openCreditCardKeys: string[]
     selectedCreditCard: {
-        key: string | null,
-        dueDay: string | null
+        key: string | null
     }
 }
 
@@ -41,14 +41,17 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
             ...{
                 accessibleCreditCardKeys: [],
                 selectedCreditCard: {
-                    key: null,
-                    dueDay: null
-                }
+                    key: null
+                },
+                openCreditCardKeys: []
             }
         } as CreditCardManagerStateProps
     }
 
     pushAccessibleCreditCardKey = (key: string) => {
+        if (ObjectUtil.isEmpty(key)) {
+            return
+        }
         const accessibleCreditCardKeys = this.getAccessibleCreditCardKeys()
         ObjectUtil.pushItIfNotIn(key, accessibleCreditCardKeys)
         this.setState({accessibleCreditCardKeys: accessibleCreditCardKeys})
@@ -56,7 +59,7 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
 
     popAccessibleCreditCardKey = (key: string) => {
         const accessibleCreditCardKeys = this.getAccessibleCreditCardKeys()
-        ObjectUtil.popIt(key, accessibleCreditCardKeys)
+        ObjectUtil.popItIfInIt(key, accessibleCreditCardKeys)
         this.setState({accessibleCreditCardKeys: accessibleCreditCardKeys})
     }
 
@@ -70,6 +73,31 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
         return ObjectUtil.inIt(key, this.getAccessibleCreditCardKeys())
     }
 
+    pushOpenCreditCardKey = (key: string | null) => {
+        if (ObjectUtil.isEmpty(key)) {
+            return
+        }
+        const openCreditCardKeys = this.getOpenCreditCardKeys()
+        ObjectUtil.pushItIfNotIn(key, openCreditCardKeys)
+        this.setState({openCreditCardKeys: openCreditCardKeys})
+    }
+
+    popOpenCreditCardKey = (key: string) => {
+        const openCreditCardKeys = this.getOpenCreditCardKeys()
+        ObjectUtil.popItIfInIt(key, openCreditCardKeys)
+        this.setState({openCreditCardKeys: openCreditCardKeys})
+    }
+
+    getOpenCreditCardKeys = () => {
+        return [
+            ...this.getState().openCreditCardKeys
+        ]
+    }
+
+    isOpenCreditCardKey = (key: string) => {
+        return ObjectUtil.inIt(key, this.getOpenCreditCardKeys())
+    }
+
     getSelectedCreditCard = () => {
         return this.state.selectedCreditCard
     }
@@ -77,25 +105,47 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
     setSelectedCreditCard = (creditCard: CreditCardApi) => {
         if (this.getSelectedCreditCard().key && creditCard.key === this.getSelectedCreditCard().key) {
             this.setState({selectedCreditCard: {
-                key: null,
-                dueDay: null
+                key: null
             }})
         } else {
             this.setState({selectedCreditCard: {
-                key: creditCard.key,
-                dueDay: creditCard.dueDay
+                key: creditCard.key
             }})
         }
-        this.getCreditCards()
+        // if () {
+        //     this.pushOpenCreditCardKey(creditCard.key)
+        // } else {
+        //     this.pushOpenCreditCardKey(creditCard.key)
+        // }
+        const creditCardKeyList: Array<string> = [this.getSelectedCreditCard().key].filter(k => ObjectUtil.isNotNull(k)) as Array<string>
+        if (ObjectUtil.isNotEmpty(creditCardKeyList)) {
+            this.getCreditCards({keyList: creditCardKeyList, date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })}) 
+        }
     }
 
-    getCreditCards = () => {
-        const creditCardList = this.creditCardService.getCreditCards({keyList: this.getAccessibleCreditCardKeys()})
-        creditCardList.forEach((creditCard: CreditCardApi) => this.pushAccessibleCreditCardKey(!!creditCard.key ? creditCard.key : ObjectUtil.generateUniqueKey()))
-        this.invoiceManager.getInvoices({
-            creditCardList: creditCardList,
-            date: this.invoiceManager.getDate()
+    getCreditCards = (props?: { keyList: string[], date: Date}) => {
+        const creditCardKeyList = props ? props.keyList : this.getAccessibleCreditCardKeys()
+        const creditCardList = this.creditCardService.getCreditCards({ keyList: creditCardKeyList })
+        creditCardList.map((creditCard: CreditCardApi) => {
+            this.pushAccessibleCreditCardKey(!!creditCard.key ? creditCard.key : ObjectUtil.generateUniqueKey())
+            // this.invoiceManager.getInvoices({
+            //     creditCardList: [creditCard],
+            //     date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })
+            // })
         })
+        // const creditCard = creditCardList.filter((creditCard) => ObjectUtil.containsIt(creditCard.key, creditCardKeyList))[0]
+        if (ObjectUtil.isEmpty(props)) {
+            this.invoiceManager.getInvoices({
+                creditCardList: creditCardList,
+                date: props ? props.date : this.invoiceManager.getDate()
+            })
+        } else {
+            const creditCard = creditCardList.filter((creditCard) => ObjectUtil.containsIt(creditCard.key, creditCardKeyList))[0]
+            this.invoiceManager.getInvoices({
+                creditCardList: [creditCard],
+                date: props ? props.date : this.invoiceManager.getDate({ creditCardKey: creditCard.key })
+            })
+        }
         return creditCardList
     }
 
@@ -104,6 +154,7 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
         if (1 === creditCardList.length && !!!this.getSelectedCreditCard().key) {
             this.setSelectedCreditCard(creditCardList[0])
         }
+        
         return creditCardList.map((creditCard: CreditCardApi) => {
             return (
                 <div 
@@ -198,13 +249,15 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                                 }}
                             >Limit: R$ {-creditCard.customLimit}</div>
                         </div>
-                        
                         {
                             this.invoiceManager.renderInvoiceDetails({
                                 creditCard: creditCard,
-                                date: this.invoiceManager.getDate()
+                                date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })
                             })
                         }
+                        <CreditCardOperations
+                            creditCard={creditCard}
+                        />
                     </div>
                     {
                         this.getSelectedCreditCard().key === creditCard.key ? (
@@ -236,7 +289,7 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                                     {
                                         this.invoiceManager.renderInvoices({
                                             creditCard: creditCard,
-                                            date: this.invoiceManager.getDate()
+                                            date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })
                                         })
                                     }
                                 </div>

@@ -1,14 +1,8 @@
 import { useContext } from "react";
 import { AppContext } from "../../context/AppContext";
 import { PageManager } from "../../manager/PageManager";
-import { StyleService } from "../../service/StyleService";
+import { StyleService, TOPBAR_BACKGROUND_COLOR, TOPBAR_TAILWIND_DIMMENTONS } from "../../service/StyleService";
 import { AuthenticationComponent } from "../authentication/AuthenticationComponent";
-
-
-export const TOPBAR_DIMMENTONS = 40
-export const BORDER_WIDTH = 2
-const TOPBAR_TAILWIND_DIMMENTONS = `w-full h-10` //-> `w-full h-${parseInt(`${TOPBAR_DIMMENTONS/4}`, 10)}`
-const TOPBAR_BACKGROUND_COLOR = 'bg-black'
 
 export const TopbarComponent = () => {
     

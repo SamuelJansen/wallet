@@ -16,3 +16,19 @@ body {
 body::-webkit-scrollbar {
   display: none;
 }
+
+.__scrollbar {
+  /* position: relative; */
+  /* bottom: 0; */
+
+  scrollbar-width: 10px;
+  scrollbar-height: 10px;
+  /* -ms-overflow-style: none; */
+}
+.__scrollbar::-webkit-scrollbar {
+  /* position: relative; */
+  /* bottom: 0; */
+  width: 8px;
+  height: 8px;
+  box-shadow: inset 0 0 2px grey;
+}

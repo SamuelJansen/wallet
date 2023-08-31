@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { UserCircle} from 'phosphor-react'
-import { TOPBAR_DIMMENTONS } from '../topbar/TopbarComponent';
+import { ICON_SIZE } from '../../service/StyleService';
 
 
 export const GoogleLoginComponent = () => {
@@ -17,9 +17,9 @@ export const GoogleLoginComponent = () => {
           // onClick={() => authenticationService.doLogout()}
         >
             <UserCircle 
-              size={TOPBAR_DIMMENTONS - TOPBAR_DIMMENTONS/8}
+              size={ICON_SIZE}
               onClick={() => authenticationService.doLogin()}
-              color={styleService.getColorMode().text}
+              color={styleService.getMainButtonColor()}
             />
         </div>
     </div>

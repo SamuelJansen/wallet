@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Dispatch, DispatchWithoutAction, SetStateAction, useState } from 'react';
 import { ObjectUtil } from '../util/ObjectUtil';
 
 
@@ -6,12 +6,22 @@ export interface ContextProvider<T> extends CallableFunction {
     (): T | (() => T)
 }
 
-export interface ServiceState {
+export interface State {
     [key: string]: any
 }
 
-export interface ManagerState {
-    [key: string]: any
+export interface ServiceState extends State {
+}
+
+export interface ManagerState extends State {
+}
+
+export interface BinaryStateHandler {    
+    it: boolean
+    setIt: Dispatch<SetStateAction<boolean>>
+    isIt: CallableFunction
+    isNotIt: CallableFunction
+    switchIt: DispatchWithoutAction
 }
 
 export class ContexState<T extends ServiceState | ManagerState> {
@@ -24,11 +34,20 @@ export class ContexState<T extends ServiceState | ManagerState> {
         this.state = {} as T
     }
 
+    buildState = (outterState: State) => {
+        this.setState(outterState)
+        // this.state = {
+        //     ...this.state,
+        //     ...outterState
+        // } as T
+    }
+
+
     propagateState = () => {
         this.stateUpdateHandler({...this})
     }
 
-    setStateWithoutPropagation = (props: ServiceState | ManagerState) => {
+    setStateWithoutPropagation = (props: State) => {
         if (!!props) {
             ObjectUtil.iterateOver(props).forEach((key: string, index: number) => {
                 if (!!props[key]) {
@@ -67,9 +86,30 @@ export class ContexState<T extends ServiceState | ManagerState> {
 
 
 
-export function useContextState<T extends ContexState<ServiceState | ManagerState>>(provider: any): T {
+export function useContextState<T extends ContexState<State>>(provider: any): T {
     const [provided, setProvided] = useState<T>(provider as (() => T))
     provided.overrideUpdateHandler(setProvided)
     return provided
+}
+
+export const useBinaryStateHandler = (initialState: boolean = false): BinaryStateHandler => {    
+    const [it, setIt] = useState<boolean>(initialState)
+    const isIt = (): boolean => {
+        return true && it
+    }
+    const switchIt = (): boolean => {
+        setIt(!isIt())
+        return isIt()
+    }
+    const isNotIt = () => {
+        return !isIt()
+    }
+    return {
+        it: it,
+        setIt: setIt,
+        isIt: isIt,
+        isNotIt: isNotIt,
+        switchIt: switchIt
+    }
 }
 

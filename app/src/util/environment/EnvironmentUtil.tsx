@@ -7,7 +7,7 @@ const getEnv = () => {
 }
 
 const get = (key: string) => {
-    return StringUtil.strip(getEnv()[key])
+    return StringUtil.stripIt(getEnv()[key])
 }
 
 const getCurrentEnvironment = () => {

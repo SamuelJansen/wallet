@@ -2,7 +2,7 @@ import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
-import { DataCollectionExecutor } from "../framework/DataCollectionExecutor";
+import { CollectionStateProps, ContexServiceState, DataCollectionExecutor } from "../framework/DataCollectionExecutor";
 import { DataApi } from "../framework/DataApi";
 
 
@@ -17,7 +17,14 @@ export interface CreditApi extends DataApi  {
     limit: number
     currentLimit: number
 }
-export interface CreditRequestApi extends DataApi  {
+export interface CreditCardRequestApi extends DataApi {
+    value: number
+    closingDay: number
+    creditKey: string
+    dueDay: number
+    expirationDate: string
+    label: string
+    customLimit: number
 }
 
 export interface CreditCardApi extends DataApi {
@@ -31,12 +38,8 @@ export interface CreditCardApi extends DataApi {
     customLimit: number
 }
 
-export interface CreditCardsServiceStateProps {
-    [key: string]: CreditCardApi[]
-}
-
-export interface CreditCardServiceStateProps extends ServiceState {
-    creditCards: CreditCardsServiceStateProps
+export interface CreditCardServiceStateProps extends ContexServiceState<CreditCardApi> {
+    creditCards: CollectionStateProps<CreditCardApi>
 }
 
 export interface CreditCardServiceProps {
@@ -46,7 +49,7 @@ export interface CreditCardServiceProps {
 export class CreditCardService extends ContexState<CreditCardServiceStateProps> implements CreditCardServiceProps {
 
     authenticationService: AuthenticationService
-    creditCardsCollectionExecutor: DataCollectionExecutor<CreditCardsServiceStateProps, CreditCardApi, CreditRequestApi>
+    creditCardsCollectionExecutor: DataCollectionExecutor<CreditCardApi, CreditCardRequestApi>
 
     constructor(props: CreditCardServiceProps) {
         super()
@@ -54,7 +57,7 @@ export class CreditCardService extends ContexState<CreditCardServiceStateProps> 
             ...this.state
         } as CreditCardServiceStateProps
         this.authenticationService = props.authenticationService
-        this.creditCardsCollectionExecutor = new DataCollectionExecutor<CreditCardsServiceStateProps, CreditCardApi, CreditRequestApi>({
+        this.creditCardsCollectionExecutor = new DataCollectionExecutor<CreditCardApi, CreditCardRequestApi>({
             url: `${API_BASE_URL}/credit-card/all`, 
             stateName: `creditCards`, 
             service: this,

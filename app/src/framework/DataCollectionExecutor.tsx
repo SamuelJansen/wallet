@@ -1,7 +1,7 @@
 import { ContexState, ServiceState } from "../context-manager/ContextState"
 import { AuthenticationService } from "../service/AuthenticationService"
 import { ObjectUtil } from "../util/ObjectUtil"
-import { DataApi, ErrorApi, NOT_BODYABLE_OPERATIONS, RESOURCE_OPERATIONS, RestResponse } from "./DataApi"
+import { DataApi, ErrorApi, NOT_BODYABLE_OPERATIONS, RESOURCE_OPERATIONS, RestResponse, isErrorApi } from "./DataApi"
 
 export const REST_METHODS = {
     [RESOURCE_OPERATIONS.GET_COLLECTION]: 'GET',
@@ -33,11 +33,13 @@ export const REST_METHODS = {
     // OPTIONS = 'OPTIONS'
 }
 
-export interface DataCollectionProps<T extends ServiceState> {
+const COLLECTION_STATE_KEY = 'COLLECTION'
+
+export interface DataCollectionProps<X extends DataApi> extends ServiceState {
     url: string, 
     stateName: string, 
     authenticationService: AuthenticationService
-    service: ContexState<T>
+    service: ContexState<ContexServiceState<X>>
 }
 
 export interface MessageDetails {
@@ -45,26 +47,36 @@ export interface MessageDetails {
     message: string
 }
 
+export interface CollectionStateProps<T> extends ServiceState {
+    [key: string]: T
+}
+
 export interface ResourceState<T extends DataApi> {
-    data: Map<string, T>,
+    data: CollectionStateProps<T>,
     isProcessing: false,
     isProcessed: false
 }
 
+export interface ContexServiceState<X extends DataApi> extends ServiceState {
+    [COLLECTION_STATE_KEY]: ResourceState<X>
+    [RESOURCE_OPERATIONS.GET_COLLECTION]: ResourceState<X>
+    [RESOURCE_OPERATIONS.POST_COLLECTION]: ResourceState<X>
+    [RESOURCE_OPERATIONS.PATCH_COLLECTION]:  ResourceState<X>
+    [RESOURCE_OPERATIONS.DELETE_COLLECTION]:  ResourceState<X>
+}
+
 const informError = (props: {message: string | null, details: MessageDetails[]}) => {
-    alert(props.message)
+    // alert(props.message)
     console.log(props.message)
     console.log(props.details)
 }
 
-const COLLECTION_STATE_KEY = 'COLLECTION'
-
-export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y extends DataApi> {
+export class DataCollectionExecutor<X extends DataApi, Y extends DataApi> {
     url: string
     stateName: string
     authenticationService: AuthenticationService
-    service: ContexState<T>
-    constructor(props: DataCollectionProps<T>) {
+    service: ContexState<ContexServiceState<X>>
+    constructor(props: DataCollectionProps<X>) {
         this.url = props.url
         this.stateName = props.stateName
         this.authenticationService = props.authenticationService
@@ -90,9 +102,18 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
                     data: {},
                     isProcessing: false,
                     isProcessed: false
+                } as ResourceState<X>,
+                [RESOURCE_OPERATIONS.DELETE_COLLECTION]: {
+                    data: {},
+                    isProcessing: false,
+                    isProcessed: false
                 } as ResourceState<X>
             }
         })
+    }
+
+    accessDataCollection = (): Array<X> => {
+        return Object.entries<X>(this.service.getState()[this.stateName][COLLECTION_STATE_KEY].data).map(([k,v]) => v)
     }
 
     //collection
@@ -169,6 +190,29 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
         return !this.dataCollectionIsPatching(hashable)
     }
 
+    //delete
+    dataCollectionIsDeleted = (hashable: any): boolean => {
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessed
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.PATCH_COLLECTION].isProcessed
+    }
+
+    dataCollectionIsNotDeleted = (hashable: any): boolean => {
+        return !this.dataCollectionIsDeleted(hashable)
+    }
+
+    dataCollectionIsDeleting = (hashable: any): boolean => {
+        // return this.service.getState()[this.stateName][COLLECTION_STATE_KEY].isProcessing
+        return this.service.getState()[this.stateName][RESOURCE_OPERATIONS.PATCH_COLLECTION].isProcessing
+    }
+
+    dataCollectionIsNotDeleting = (hashable: any): boolean => {
+        return !this.dataCollectionIsPatching(hashable)
+    }
+
+    clearDataCollection = (props?: {query?: {}}, callback?: CallableFunction): void => {
+        ObjectUtil.iterateOver(RESOURCE_OPERATIONS).forEach((operation) => this._resetStateDataCollectionValues(operation as RESOURCE_OPERATIONS))
+    }
+
     getDataCollection = (props?: {query?: {}}, callback?: CallableFunction): X[] => {
         const operation = RESOURCE_OPERATIONS.GET_COLLECTION
         if (this.dataCollectionIsLoading(props)) {
@@ -204,12 +248,25 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
         })() : [] 
     }
 
+    
+    deleteDataCollection = (request: Y[], props?: {query?: {}}, callback?: CallableFunction): X[] => {
+        const operation = RESOURCE_OPERATIONS.DELETE_COLLECTION
+        if (this.dataCollectionIsDeleting({request, props})) {
+            return []
+        }
+        return this.authenticationService.isAuthorized() ? (() => {
+            this._fetch(request, operation, props, callback)
+            return []
+        })() : [] 
+    }
+
     overrideDataCollection = (dataCollection: X[], operation: RESOURCE_OPERATIONS) => {
+        this._setProcessingState(operation)
         const currentState = this.service.getState()
         dataCollection.forEach((data: X) => {
             if (!!!data.key) {
                 data.key = ObjectUtil.generateUniqueKey()
-                console.warn(`data should have a non null key. Guiving it a temporary key: ${data.key}`)
+                console.warn(`data should have a non null key. Giving it a temporary key: ${data.key}`)
                 console.warn(data)
             }
             currentState[this.stateName][COLLECTION_STATE_KEY].data[data.key] = {...data}
@@ -218,13 +275,29 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
         return this._accessStateDataCollectionValues(currentState[this.stateName][COLLECTION_STATE_KEY])
     }
 
-    accessCachedDataCollection = (props?: {query?: {}}, operation = RESOURCE_OPERATIONS.GET_COLLECTION): X[] => {
+    overrideDataCollectionWithPossibleLoss = (dataCollection: X[], operation: RESOURCE_OPERATIONS) => {
+        this._setProcessingState(operation)
+        const currentState = this.service.getState()
+        currentState[this.stateName][COLLECTION_STATE_KEY].data = new Map<string, X>
+        dataCollection.forEach((data: X) => {
+            if (!!!data.key) {
+                data.key = ObjectUtil.generateUniqueKey()
+                console.warn(`data should have a non null key. Giving it a temporary key: ${data.key}`)
+                console.warn(data)
+            }
+            currentState[this.stateName][COLLECTION_STATE_KEY].data[data.key] = {...data}
+        });
+        this._setProcessedState(currentState, operation)
+        return this._accessStateDataCollectionValues(currentState[this.stateName][COLLECTION_STATE_KEY])
+    }
+
+    accessCachedDataCollection = (props?: {query?: {}}, operation = RESOURCE_OPERATIONS.GET_COLLECTION): Array<X> => {
         return this.authenticationService.isAuthorized() ? (() => {
             return this.dataCollectionIsLoaded(props) ? this._accessCurrentDataCollection(operation, props) : this.getDataCollection(props?.query ? {query: props.query} : {})
         })() : [] 
     }
 
-    _fetch = (request: Y[], operation: RESOURCE_OPERATIONS, props?: {query?: {}}, callback?: CallableFunction) => {
+    _fetch = (request: Array<Y>, operation: RESOURCE_OPERATIONS, props?: {query?: {}}, callback?: CallableFunction) => {
         this._setProcessingState(operation)
         try {
             const url = new URL(this.url)
@@ -239,22 +312,22 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
             })
                 .then(async (resp) => {
                     return {
-                        body: (await resp.json()) as (X[] | ErrorApi),
+                        body: (await resp.json()) as (Array<X> | ErrorApi),
                         status: resp.status,
                         originalResponse: resp
-                    } as RestResponse<X[]>
+                    } as RestResponse<X>
                 })
-                .then((restResponse: RestResponse<X[]>) => {
-                    console.log(restResponse)
-                    if (400 > restResponse.status && restResponse.body instanceof Array<X>) {
-                        if (restResponse.body instanceof Array<X>) {
+                .then((restResponse: RestResponse<X>) => {
+                    // console.log(restResponse)
+                    if (400 > restResponse.status && restResponse.body instanceof Array) {
+                        if (restResponse.body instanceof Array) {
                             this.overrideDataCollection(restResponse.body, operation)
                         } else {
                             this._setNotProcessingState(operation)
                         }
                     } else {
                         this._setProcessedState(this.service.getState(), operation)
-                        if (!(restResponse.body instanceof Array<X>)) {
+                        if (isErrorApi(restResponse.body)) {
                             informError({
                                 message: restResponse?.body?.message,
                                 details: []
@@ -295,24 +368,24 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
 
     _setNotProcessingState = (operation: RESOURCE_OPERATIONS) => {
         const statePatch = {isProcessing: false}
-        console.log('here before')
+        // console.log('here before')
         this._updateResourceState(this.service.getState(), operation, statePatch) 
-        console.log('here after')
+        // console.log('here after')
     }
 
-    _setProcessedState = (currentState: T, operation: RESOURCE_OPERATIONS) => {
+    _setProcessedState = (currentState: ContexServiceState<X>, operation: RESOURCE_OPERATIONS) => {
         const statePatch = {isProcessed: true, isProcessing: false}
         this._updateResourceState(currentState, operation, statePatch) 
     }
 
-    _updateResourceState = (currentState: T, operation: RESOURCE_OPERATIONS, statePatch: object) => {
-        console.log(operation)
-        console.log(statePatch)
+    _updateResourceState = (currentState: ContexServiceState<X>, operation: RESOURCE_OPERATIONS, statePatch: object) => {
+        // console.log(operation)
+        // console.log(statePatch)
         this.service.setState({[this.stateName]: this._mergeResourceState(currentState, operation, statePatch)})
         return this.service.setState({[this.stateName]: this._mergeResourceState(currentState, COLLECTION_STATE_KEY, statePatch)})
     }
 
-    _mergeResourceState = (currentState: T, operation: string, statePatch: object) => {
+    _mergeResourceState = (currentState: ContexServiceState<X>, operation: string, statePatch: object) => {
         return {...currentState[this.stateName], ...{[operation]: {...currentState[this.stateName][operation], ...statePatch}}}
     }
 
@@ -320,8 +393,15 @@ export class DataCollectionExecutor<T extends ServiceState, X extends DataApi, Y
         return this._accessStateDataCollectionValues(this.service.getState()[this.stateName][COLLECTION_STATE_KEY])
     }
 
+    _resetStateDataCollectionValues = (operation: RESOURCE_OPERATIONS) => {
+        const currentState = this.service.getState()
+        currentState[this.stateName][COLLECTION_STATE_KEY].data = []
+        this._setProcessedState(currentState, operation)
+        return this._accessStateDataCollectionValues(currentState[this.stateName][COLLECTION_STATE_KEY])
+    }
+
     _accessStateDataCollectionValues = (stateData: any): X[] => {
-        console.log(stateData)
+        // console.log(stateData)
         return Object.values(stateData.data)
     } 
 }

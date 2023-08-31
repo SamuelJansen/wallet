@@ -2,7 +2,7 @@ import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
-import { DataCollectionExecutor } from "../framework/DataCollectionExecutor";
+import { CollectionStateProps, ContexServiceState, DataCollectionExecutor } from "../framework/DataCollectionExecutor";
 import { DataApi } from "../framework/DataApi";
 
 
@@ -27,39 +27,85 @@ export interface ResourceAccessRequestApi extends DataApi {
     accountKey: string
 }
 
-export interface CreditCardResourcesServiceStateProps extends ServiceState {
-    [key: string]: ResourceAccessApi[]
+export interface ResourceAccessAllRequestApi extends DataApi {
+    resourceKeyList: string[],
+    domain: string,
+    operationList: string[],
+    accountKey: string
 }
 
-export interface ResourceServiceStateProps extends ServiceState {
-    creditCards: CreditCardResourcesServiceStateProps
+export interface ResourceServiceStateProps extends ContexServiceState<ResourceAccessApi> {
+    creditCards: CollectionStateProps<ResourceAccessApi>
+    purchases: CollectionStateProps<ResourceAccessApi>
 }
 
 export interface ResourceServiceProps {
     authenticationService: AuthenticationService
+    creditCardsCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessRequestApi>
+    purchasesCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
 }
+
+
+export const SHARE_WITH_LIST = [
+    {
+        key: 'samuel.jansenn@gmail.com',
+        fullName: 'Samuel Jansen'
+    },
+    {
+        key: 'nandapadilhas@gmail.com',
+        fullName: 'Fernanda Padilhas S.'
+    },
+    {
+        key: 'walter.jansenn@gmail.com',
+        fullName: 'Walter Jansen'
+    },
+    {
+        key: 'rosane.adina.jansen@gmail.com',
+        fullName: 'Rosane A. S. Jansen'
+    }
+]
+export const OPERATION_LIST = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+export const DOMAIN = {
+    PURCHASE: 'Purchase'
+}
+
 
 export class ResourceService extends ContexState<ResourceServiceStateProps> implements ResourceServiceProps {
 
     authenticationService: AuthenticationService
-    creditCardsCollectionExecutor: DataCollectionExecutor<CreditCardResourcesServiceStateProps, ResourceAccessApi, ResourceAccessRequestApi>
+    creditCardsCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessRequestApi>
+    purchasesCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
 
     constructor(props: ResourceServiceProps) {
         super()
         this.state = {
-            ...this.state
+            ...this.state,
+            ...{
+                creditCards: {} as CollectionStateProps<ResourceAccessApi>,
+                purchases: {} as CollectionStateProps<ResourceAccessApi>
+            }
         } as ResourceServiceStateProps
         this.authenticationService = props.authenticationService
-        this.creditCardsCollectionExecutor = new DataCollectionExecutor<CreditCardResourcesServiceStateProps, ResourceAccessApi, ResourceAccessRequestApi>({
+        this.creditCardsCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessRequestApi>({
             url: `${API_BASE_URL}/resource/share/credit-card/all`, 
             stateName: `creditCards`, 
             service: this,
             authenticationService: this.authenticationService
         })
+        this.purchasesCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>({
+            url: `${API_BASE_URL}/resource/share/purchase/all`, 
+            stateName: `purchases`, 
+            service: this,
+            authenticationService: this.authenticationService
+        })
     }
 
-    shareCreditCardCollection = (newAccesses: ResourceAccessRequestApi[]) : ResourceAccessApi[] => {
-        return this.creditCardsCollectionExecutor.postDataCollection(newAccesses)
+    shareCreditCardCollection = (newAccesses: ResourceAccessRequestApi[], callback?: CallableFunction) : ResourceAccessApi[] => {
+        return this.creditCardsCollectionExecutor.postDataCollection(newAccesses, {}, callback ? callback: ()=>{})
+    }
+
+    sharePurchaseCollection = (newAccesses: ResourceAccessAllRequestApi[], callback?: CallableFunction) : ResourceAccessApi[] => {
+        return this.purchasesCollectionExecutor.postDataCollection(newAccesses, {}, callback ? callback: ()=>{})
     }
     
 }
