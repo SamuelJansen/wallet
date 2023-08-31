@@ -2,7 +2,7 @@ import { ContexState, ServiceState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
-import { DataCollectionExecutor } from "../framework/DataCollectionExecutor";
+import { CollectionStateProps, ContexServiceState, DataCollectionExecutor } from "../framework/DataCollectionExecutor";
 import { DataApi } from "../framework/DataApi";
 
 
@@ -20,12 +20,8 @@ export interface BalanceApi extends DataApi {
 export interface BalanceRequestApi extends DataApi {
 }
 
-export interface BalancesServiceStateProps extends ServiceState {
-    [key:string]: BalanceApi[]
-}
-
-export interface BalanceServiceStateProps extends ServiceState {
-    balances: BalanceApi
+export interface BalanceServiceStateProps extends ContexServiceState<BalanceApi> {
+    balances: CollectionStateProps<BalanceApi>
 }
 
 export interface BalanceServiceProps {
@@ -35,7 +31,7 @@ export interface BalanceServiceProps {
 export class BalanceService extends ContexState<BalanceServiceStateProps> implements BalanceServiceProps {
 
     authenticationService: AuthenticationService
-    balancesCollectionExecutor: DataCollectionExecutor<BalancesServiceStateProps, BalanceApi, BalanceRequestApi>
+    balancesCollectionExecutor: DataCollectionExecutor<BalanceApi, BalanceRequestApi>
 
     constructor(props: BalanceServiceProps) {
         super()
@@ -43,7 +39,7 @@ export class BalanceService extends ContexState<BalanceServiceStateProps> implem
             ...this.state
         } as BalanceServiceStateProps
         this.authenticationService = props.authenticationService
-        this.balancesCollectionExecutor = new DataCollectionExecutor<BalancesServiceStateProps, BalanceApi, BalanceRequestApi>({
+        this.balancesCollectionExecutor = new DataCollectionExecutor<BalanceApi, BalanceRequestApi>({
             url: `${API_BASE_URL}/balance/all`, 
             stateName: `balances`, 
             service: this,

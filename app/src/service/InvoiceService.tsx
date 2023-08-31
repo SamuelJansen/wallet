@@ -85,7 +85,7 @@ export class InvoiceService extends ContexState<InvoiceServiceStateProps | Insta
         this.authenticationService = props.authenticationService
         this.state = {
             ...this.state
-        } as InvoiceServiceStateProps
+        } as InvoiceServiceStateProps | InstallmenteServiceStateProps
         this.invoicesCollectionExecutor = new DataCollectionExecutor<InvoiceApi, InvoiceRequestApi>({
             url: `${API_BASE_URL}/invoice/all`, 
             stateName: `invoices`, 
