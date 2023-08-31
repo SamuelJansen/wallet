@@ -5,7 +5,7 @@ import { DateTimeUtil } from "../util/DateTimeUtil";
 import { InvoiceManager } from "./InvoiceManager";
 import { ResourceManager } from "./ResourceManager";
 import { ObjectUtil } from "../util/ObjectUtil";
-import { CreditCardOperations } from "../component/credit-card/CreditCardOperations";
+import { CreditCardOperations } from "../component/CreditCard/CreditCardOperations";
 
 export interface CreditCardManagerStateProps extends ManagerState {
     accessibleCreditCardKeys: string[]
