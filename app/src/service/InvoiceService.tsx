@@ -70,8 +70,6 @@ export interface InstallmenteServiceStateProps extends ContexServiceState<Instal
 
 export interface InvoiceServiceProps {
     authenticationService: AuthenticationService
-    invoicesCollectionExecutor: DataCollectionExecutor<InvoiceApi, InvoiceRequestApi>
-    instalmentsCollectionExecutor: DataCollectionExecutor<InstallmentApi, InstallmentRequestApi>
 }
 
 export class InvoiceService extends ContexState<InvoiceServiceStateProps | InstallmenteServiceStateProps> implements InvoiceServiceProps {

@@ -41,8 +41,6 @@ export interface ResourceServiceStateProps extends ContexServiceState<ResourceAc
 
 export interface ResourceServiceProps {
     authenticationService: AuthenticationService
-    creditCardsCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessRequestApi>
-    purchasesCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
 }
 
 
