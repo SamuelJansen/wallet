@@ -43,20 +43,16 @@ export class ResourceManager extends ContexState<ResourceManagerStateProps> impl
 
     }
 
-    sharePurchaseCollection = (purchaseColllection: ResourceAccessAllRequestApi[]) => {
-        this.resourceService.sharePurchaseCollection(purchaseColllection)
-    }
-
     renderCreditCardOperations = (creditCard: CreditCardApi) => {
         return (
             <div
                 className={`w-full h-4 flex items-center justify-end ${this.styleService.getTWTextColor()}`}
             >
-                <DotsThreeOutlineVertical 
+                {/* <DotsThreeOutlineVertical 
                     id={'access-credit-card-options'}
                     size={18} 
                     onClick={() => this.resourceService.shareCreditCardCollection([])}
-                />
+                /> */}
             </div>
         )
     }

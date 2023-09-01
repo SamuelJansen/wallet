@@ -7,7 +7,6 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { DOMAIN, OPERATION_LIST, ResourceAccessAllRequestApi, SHARE_WITH_LIST } from '../../service/ResourceService';
 import { useBinaryStateHandler } from '../../context-manager/ContextState';
 import { StringUtil } from '../../util/StringUtil';
-import { ResourceManager } from '../../manager/ResourceManager';
 import { InvoiceManager } from '../../manager/InvoiceManager';
 import { PurchaseRequestApi } from '../../service/PurchaseService';
 import { CreditCardApi } from '../../service/CreditCardService';
@@ -16,12 +15,10 @@ import { CreditCardApi } from '../../service/CreditCardService';
 export const PurchaseOperations = (props: { installment: InstallmentApi, creditCard: CreditCardApi, callback?: CallableFunction }) => {
     const { 
         styleService,
-        invoiceManager,
-        resourceManager
+        invoiceManager
     } : {
         styleService: StyleService,
         invoiceManager: InvoiceManager,
-        resourceManager: ResourceManager
     } = useContext<AppContextProps>(AppContext)
     const purchaseOptionsBSH = useBinaryStateHandler(false)
     const sharePurchaseBSH = useBinaryStateHandler(false)
@@ -40,14 +37,14 @@ export const PurchaseOperations = (props: { installment: InstallmentApi, creditC
             // alert('')
         } catch (err: any) {
             console.log(err)
-            alert(`Share error: ${err.message}`)
+            alert(`Revert error: ${err.message}`)
         }
     }
     const handleSharePurchase = async (event: FormEvent) => {
         event.preventDefault()
         const formData = new FormData(event.target as HTMLFormElement)
         const data = Object.fromEntries(formData)
-        const purchaseColllection = [
+        const purchaseColllectionRequest = [
             {
                 resourceKeyList: [new String(props.installment.purchaseKey)],
                 domain: DOMAIN.PURCHASE,
@@ -59,7 +56,7 @@ export const PurchaseOperations = (props: { installment: InstallmentApi, creditC
             if (StringUtil.isEmpty(data.accountKey)) {
                 throw new Error('Account not selected')
             }
-            resourceManager.sharePurchaseCollection(purchaseColllection)
+            invoiceManager.transferPurchase({ purchaseColllectionRequest, creditCardRequest: props.creditCard })
             sharePurchaseBSH.switchIt()
             purchaseOptionsBSH.switchIt()
             // alert('')
@@ -164,20 +161,6 @@ export const PurchaseOperations = (props: { installment: InstallmentApi, creditC
                         size={18} 
                         color={styleService.getMainButtonColor()}
                         onClick={() => {
-                            // this.installmentService.proccessAll({keyList: [installment.key]}, callback)
-                            // this.rendeStuff()
-                            // this.resourceService.sharePurchaseCollection(
-                            //     [
-                            //         {
-                            //             key: null,
-                            //             resourceKeyList: !!installment.purchaseKey ? [installment.purchaseKey] : [ObjectUtil.generateUniqueKey()],
-                            //             domain: 'Purchase',
-                            //             operationList: ['GET', 'PATCH'],
-                            //             accountKey: 'samuel.jansenn@gmail.com'
-                            //         }
-                            //     ], 
-                            //     callback
-                            // )
                             purchaseOptionsBSH.switchIt()
                         }}
                     /> 

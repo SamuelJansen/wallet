@@ -9,6 +9,7 @@ import { ObjectUtil } from "../util/ObjectUtil";
 import { CreditCardManager } from "./CreditCardManager";
 import { PurchaseRequestApi, PurchaseService } from "../service/PurchaseService";
 import { PurchaseOperations } from "../component/purchases/PurchaseOperations";
+import { ResourceAccessAllRequestApi, ResourceService } from "../service/ResourceService";
 
 export interface InvoiceManagerStateProps extends ManagerState {
     date: Date
@@ -21,7 +22,7 @@ export interface InvoiceManagerProps {
     pageService: PageService
     purchaseService: PurchaseService
     invoiceService: InvoiceService
-    resourceManager: ResourceManager
+    resourceService: ResourceService
 }
 
 export interface InvoiceQueryApiProps {
@@ -51,7 +52,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
     pageService: PageService
     purchaseService: PurchaseService
     invoiceService: InvoiceService
-    resourceManager: ResourceManager
+    resourceService: ResourceService
     creditCardManager?: CreditCardManager
 
     constructor(props: InvoiceManagerProps) {
@@ -60,7 +61,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         this.pageService = props.pageService
         this.purchaseService = props.purchaseService
         this.invoiceService = props.invoiceService
-        this.resourceManager = props.resourceManager
+        this.resourceService = props.resourceService
         this.state = {
             ...this.state,
             ...{
@@ -138,6 +139,14 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
             creditCardRequest
         } = {...props}
         this.purchaseService.revertPurchaseCollection([purchaseRequest], { callback: () => this.renewInvoices({ creditCardRequest }) })
+    }
+
+    transferPurchase = ( props: { purchaseColllectionRequest: ResourceAccessAllRequestApi[], creditCardRequest: CreditCardApi } ) => {
+        const {
+            purchaseColllectionRequest,
+            creditCardRequest
+        } = {...props}
+        this.resourceService.sharePurchaseCollection(purchaseColllectionRequest, { callback: () => this.renewInvoices({ creditCardRequest }) })
     }
 
     renewInvoices = (props: { creditCardRequest: CreditCardApi }): void => {
@@ -393,16 +402,6 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                                 width: '90px'
                             }}
                         >R$ {props.installment.purchase.value}</div>
-                        {/* <div>
-                            {
-                                this.resourceManager.renderInstallmentOperations(props.installment, () => {
-                                    this.renewInvoices({
-                                        creditCard: props.installment.purchase.creditCard
-                                    })
-                                    this.pageService.getManager()?.reRenderSelectedPage()
-                                })
-                            }
-                        </div> */}
                         <PurchaseOperations
                             installment={props.installment}
                             creditCard={props.creditCard}

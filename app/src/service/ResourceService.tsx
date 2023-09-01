@@ -54,6 +54,10 @@ export const SHARE_WITH_LIST = [
         fullName: 'Fernanda Padilhas S.'
     },
     {
+        key: 'maeljansen@gmail.com',
+        fullName: 'Ismael Jansen'
+    },
+    {
         key: 'walter.jansenn@gmail.com',
         fullName: 'Walter Jansen'
     },
@@ -98,12 +102,12 @@ export class ResourceService extends ContexState<ResourceServiceStateProps> impl
         })
     }
 
-    shareCreditCardCollection = (newAccesses: ResourceAccessRequestApi[], callback?: CallableFunction) : ResourceAccessApi[] => {
-        return this.creditCardsCollectionExecutor.postDataCollection(newAccesses, {}, callback ? callback: ()=>{})
-    }
+    // shareCreditCardCollection = (newAccesses: ResourceAccessRequestApi[], callback?: CallableFunction) : ResourceAccessApi[] => {
+    //     return this.creditCardsCollectionExecutor.postDataCollection(newAccesses, {}, callback ? callback: ()=>{})
+    // }
 
-    sharePurchaseCollection = (newAccesses: ResourceAccessAllRequestApi[], callback?: CallableFunction) : ResourceAccessApi[] => {
-        return this.purchasesCollectionExecutor.postDataCollection(newAccesses, {}, callback ? callback: ()=>{})
+    sharePurchaseCollection = (newAccesses: ResourceAccessAllRequestApi[], props: { callback?: CallableFunction }) : ResourceAccessApi[] => {
+        return this.purchasesCollectionExecutor.postDataCollection(newAccesses, {}, props.callback)
     }
     
 }
