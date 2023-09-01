@@ -99,6 +99,18 @@ const toUserDate = (date: String | Date): string => {
     return `${new String(date.getDate()).padStart(2, '0')}/${new String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
 }
 
+const toUserTime = (date: String | Date): string => {
+    if (date instanceof String || typeof date === 'string') {
+        const dateSpitted = date.split(' ')[1].split(':')
+        return `${dateSpitted[0]}:${dateSpitted[1]}:${dateSpitted[2]}`
+    }
+    return `${new String(date.getHours()).padStart(2, '0')}:${new String(date.getMinutes()).padStart(2, '0')}:${new String(date.getSeconds()).padStart(2, '0')}.${new String(date.getMilliseconds()).padStart(3, '0')}`
+}
+
+const toUserDateTime = (date: String | Date): string => {
+    return `${toUserDate(date)} ${toUserTime(date)}`
+}
+
 const toRestDate = (date: String | Date): string => {
     if (date instanceof String || typeof date === 'string') {
         const dateSpitted = date.split(' ')[0].split('/')
@@ -122,5 +134,7 @@ export const DateTimeUtil = {
     getTodayRestTime,
     getTodayUserDate,
     toUserDate,
+    toUserTime,
+    toUserDateTime,
     toRestDate
 }

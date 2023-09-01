@@ -59,6 +59,10 @@ export class StyleService extends ContexState<StyleStateProps> {
         }
     }
 
+    getTWDialog = () => {
+        return `fixed bg-[#333333] py-6 px-6 text-white top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg max-w-[480px] w-[90%] shadow-lg shadow-black/25`
+    }
+
     getIconSize = () => {
         return ICON_SIZE
     }

@@ -102,7 +102,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                         placeholder='Purchase of'
                     /> 
                     <div
-                        className='text-gray-100 gap-4'
+                        className='text-gray-100 gap-y-4 gap-x-2'
                         style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -112,7 +112,8 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                     >
                         <Input
                             style={{
-                                color: '#CCCCCC'
+                                color: '#CCCCCC',
+                                colorScheme: 'dark'
                             }}
                             key='purchaseDate'
                             name='purchaseDate'
@@ -122,7 +123,8 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                         /> 
                         <Input
                             style={{
-                                color: '#CCCCCC'
+                                color: '#CCCCCC',
+                                colorScheme: 'dark'
                             }}
                             key='purchaseTime' 
                             name='purchaseTime'
@@ -135,7 +137,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                             <select 
                                 id='operation' 
                                 name='operation'
-                                className='w-full h-full flex py-3 px-4 space-x-0 bg-zinc-900 rounded placeholder:text-zinc-500 appearance-none'
+                                className='w-full h-[90%] flex justify-center py-1 px-3 space-x-0 bg-zinc-900 rounded placeholder:text-zinc-500 appearance-none'
                                 defaultValue=''
                                 style={{
                                     fontSize: '10px'
@@ -147,6 +149,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                                 {ObjectUtil.keys(OPERATION_TYPES).map((operation) => {
                                     return (
                                         <option 
+                                            className='flex justify-center'
                                             key={operation} 
                                             value={operation} 
                                             data-content={operation === OPERATION_TYPES.payment ? <ArrowFatLinesUp/> : <ArrowFatLinesDown/>}
@@ -159,7 +162,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                         </div>
                     </div>
                     <div
-                        className='text-gray-100'
+                        className='text-gray-100 gap-x-2'
                         style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -169,6 +172,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                         }}
                     >
                         <Input
+                            // width='max-w-[40%]'
                             key='purchaseValue' 
                             name='purchaseValue'
                             type='monetary'
@@ -176,6 +180,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                             placeholder='value'
                         /> 
                         <Input
+                            // width='max-w-[40%]'
                             key='purchaseTimes' 
                             name='purchaseTimes'
                             type='number'
@@ -278,7 +283,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                     <Dialog.Portal>
                         <Dialog.Overlay className='bg-black/30 inset-0 fixed'/>
                         <Dialog.Content 
-                            className='fixed bg-[#333333] py-6 px-6 text-white top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg w-[480px] shadow-lg shadow-black/25'
+                            className={styleService.getTWDialog()}
                         >
                             {
                                 renderNewPurchaseForm()

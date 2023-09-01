@@ -14,7 +14,6 @@ export interface InvoiceManagerStateProps extends ManagerState {
     date: Date
     creditCardDateCollection: Map<string, Date>
     selectedPurchaseKeys: string[]
-    inNewPurchase: boolean
 }
 
 export interface InvoiceManagerProps {
@@ -67,8 +66,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
             ...{
                 date: DateTimeUtil.dateNow(),
                 creditCardDateCollection: new Map<string, Date>(),
-                selectedPurchaseKeys: [],
-                inNewPurchase: false
+                selectedPurchaseKeys: []
             }
         } as InvoiceManagerStateProps
     }
@@ -160,15 +158,15 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                 return invoice.installmentList
             })
             .reduce((acc, installment) => {
-                (acc[installment.installmentAt] = acc[installment.installmentAt] || []).push(installment);
+                (acc[DateTimeUtil.toRestDate(installment.installmentAt)] = acc[DateTimeUtil.toRestDate(installment.installmentAt)] || []).push(installment);
                 return acc;
             }, {} as InstallmentAtGroupedInstallmentsApi)
         // https://reactcommunity.org/react-transition-group/css-transition
         // import { CSSTransition } from 'react-transition-group';
         // CSSTransition
-        return ObjectUtil.iterateOver(groupedInstallments).map((installmentAt: string, index: number) => {
+        return ObjectUtil.iterateOver(groupedInstallments).map((normalizedInstallmentAt: string, index: number) => {
             return <div
-                key={installmentAt}
+                key={normalizedInstallmentAt}
                 style={{
                     width: '100%',
                     fontSize: '14px',
@@ -184,10 +182,10 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                         fontSize: '10px'
                     }}
                 >
-                    {DateTimeUtil.toUserDate(installmentAt)}
+                    {DateTimeUtil.toUserDate(normalizedInstallmentAt)}
                 </div>
                 {
-                    groupedInstallments[installmentAt].map((installment: InstallmentApi) => {
+                    groupedInstallments[normalizedInstallmentAt].map((installment: InstallmentApi) => {
                         const valueColor = 0 < installment.value ? this.styleService.getTWTextColor() : 'text-gray-100'
                         return (
                             <div
@@ -367,7 +365,7 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
                                 justifyContent: 'right'
                             }}
                         >
-                            Bought at: {DateTimeUtil.toUserDate(props.installment.purchase.purchaseAt)}
+                            Bought at: {DateTimeUtil.toUserDateTime(props.installment.purchase.purchaseAt)}
                         </div>
                         <div
                             className='text-gray-500'

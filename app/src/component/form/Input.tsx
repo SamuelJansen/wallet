@@ -32,7 +32,7 @@ interface InpusSelectProps {
 const resolveWidth = (width?: string) => {
     // return width ? `w-[${width}]` : 'w-full'
     // const resolvedWidth = width ? width.includes('%') ? `w-[${width}]` : `w-${width}` : 'w-full'
-    return width ? width.includes('%') ? `w-[${width}]` : `w-${width}` : 'w-full'
+    return width ? (width.includes('%') ? `w-[${width}]` : width.includes('max') ? width : `w-${width}`) : 'w-full'
     // return width ? `w-${width}` : 'w-full'
     
 }
