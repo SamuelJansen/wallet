@@ -60,7 +60,7 @@ export class StyleService extends ContexState<StyleStateProps> {
     }
 
     getFooterButtonContent = () => {
-        return `mt-4 flex justify-center gap-x-6`
+        return `mt-2 flex justify-center gap-x-6`
     }
 
     getIconSize = () => {
