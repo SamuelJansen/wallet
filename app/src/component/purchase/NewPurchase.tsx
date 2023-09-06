@@ -158,7 +158,6 @@ export const NewPurchase = (props: { creditCard: CreditCardApi }) => {
                             display: 'flex',
                             justifyContent: 'space-between',
                             width: '100%',
-                            paddingBottom: '10px',
                             fontSize: '14px',
                         }}
                     >

@@ -143,7 +143,6 @@ export const NewCreditCard = (props: { }) => {
                             display: 'flex',
                             justifyContent: 'space-between',
                             width: '100%',
-                            paddingBottom: '10px',
                             fontSize: '14px',
                         }}
                     >
