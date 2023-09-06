@@ -156,7 +156,7 @@ export const NewCreditCard = (props: { }) => {
                         <Input
                             key='customLimit' 
                             name='customLimit'
-                            type='number'
+                            type='monetary'
                             label='' 
                             placeholder='custom limit'
                         /> 
