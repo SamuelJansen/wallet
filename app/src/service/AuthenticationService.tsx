@@ -1,4 +1,4 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StorageUtil } from "../util/storage/StorageUtil";
 import { STORAGE_KEYS } from "../util/storage/SotrageKeys";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
@@ -28,7 +28,7 @@ export interface LoginDataApi {
     roles: [string]
 }
 
-export interface AuthenticationStateProps extends ServiceState {
+export interface AuthenticationStateProps extends State {
     loginData: LoginDataApi | null
     authorization: string
 }

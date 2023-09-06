@@ -1,8 +1,8 @@
-import { ContexState, ManagerState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
 import { BalanceService } from "../service/BalanceService";
 
-export interface BalanceManagerStateProps extends ManagerState {
+export interface BalanceManagerStateProps extends State {
 }
 
 export interface BalanceManagerProps {

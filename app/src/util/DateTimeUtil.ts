@@ -1,3 +1,4 @@
+import { ObjectUtil } from "./ObjectUtil";
 import { StringUtil } from "./StringUtil";
 
 const ofDate = (givenDate: String | Date | null): Date => {
@@ -17,17 +18,17 @@ const ofDate = (givenDate: String | Date | null): Date => {
 const concatRestDateTime = (props: {
     restDate?: string
     restTime?: string
-    yearDashMOnthDashDay?: string
+    yearDashMonthDashDay?: string
     hourDashMinute?: string
 }): string => {
     if (StringUtil.isNotEmpty(props.restDate) && StringUtil.isNotEmpty(props.restTime)) {
         return `${props.restDate} ${props.restTime}`
     }
-    if (StringUtil.isNotEmpty(props.yearDashMOnthDashDay) && StringUtil.isNotEmpty(props.hourDashMinute)) {
-        return `${props.yearDashMOnthDashDay} ${props.hourDashMinute}:00.000`
+    if (StringUtil.isNotEmpty(props.yearDashMonthDashDay) && StringUtil.isNotEmpty(props.hourDashMinute)) {
+        return `${props.yearDashMonthDashDay} ${props.hourDashMinute}:00.000`
     }
-    if (StringUtil.isNotEmpty(props.yearDashMOnthDashDay) && StringUtil.isNotEmpty(props.restTime)) {
-        return `${props.yearDashMOnthDashDay} ${props.restTime}`
+    if (StringUtil.isNotEmpty(props.yearDashMonthDashDay) && StringUtil.isNotEmpty(props.restTime)) {
+        return `${props.yearDashMonthDashDay} ${props.restTime}`
     }
     if (StringUtil.isNotEmpty(props.restDate) && StringUtil.isNotEmpty(props.hourDashMinute)) {
         return `${props.restDate} ${props.hourDashMinute}:00.000`
@@ -111,7 +112,14 @@ const toUserDateTime = (date: String | Date): string => {
     return `${toUserDate(date)} ${toUserTime(date)}`
 }
 
+const isRestDate = (date: String | Date): boolean => {
+    return (date instanceof String || typeof date === 'string') && ObjectUtil.equals(3, date.split('-').length)
+}
+
 const toRestDate = (date: String | Date): string => {
+    if (isRestDate(date)) {
+        return date as string
+    }
     if (date instanceof String || typeof date === 'string') {
         const dateSpitted = date.split(' ')[0].split('/')
         return `${dateSpitted[0]}-${dateSpitted[1]}-${dateSpitted[2]}`

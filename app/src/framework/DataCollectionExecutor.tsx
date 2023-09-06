@@ -1,4 +1,4 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState"
+import { ContexState, State } from "../context-manager/ContextState"
 import { AuthenticationService } from "../service/AuthenticationService"
 import { ObjectUtil } from "../util/ObjectUtil"
 import { DataApi, ErrorApi, NOT_BODYABLE_OPERATIONS, RESOURCE_OPERATIONS, RestResponse, isErrorApi } from "./DataApi"
@@ -35,7 +35,7 @@ export const REST_METHODS = {
 
 const COLLECTION_STATE_KEY = 'COLLECTION'
 
-export interface DataCollectionProps<X extends DataApi> extends ServiceState {
+export interface DataCollectionProps<X extends DataApi> extends State {
     url: string, 
     stateName: string, 
     authenticationService: AuthenticationService
@@ -47,7 +47,7 @@ export interface MessageDetails {
     message: string
 }
 
-export interface CollectionStateProps<T> extends ServiceState {
+export interface CollectionStateProps<T> extends State {
     [key: string]: T
 }
 
@@ -57,7 +57,7 @@ export interface ResourceState<T extends DataApi> {
     isProcessed: false
 }
 
-export interface ContexServiceState<X extends DataApi> extends ServiceState {
+export interface ContexServiceState<X extends DataApi> extends State {
     [COLLECTION_STATE_KEY]: ResourceState<X>
     [RESOURCE_OPERATIONS.GET_COLLECTION]: ResourceState<X>
     [RESOURCE_OPERATIONS.POST_COLLECTION]: ResourceState<X>
@@ -311,8 +311,10 @@ export class DataCollectionExecutor<X extends DataApi, Y extends DataApi> {
                 ...body
             })
                 .then(async (resp) => {
+                    const thing = await resp.json()
                     return {
-                        body: (await resp.json()) as (Array<X> | ErrorApi),
+                        body: !isErrorApi(thing) ? thing : null,
+                        errorBody: isErrorApi(thing) ? thing : null,
                         status: resp.status,
                         originalResponse: resp
                     } as RestResponse<X>
@@ -327,11 +329,12 @@ export class DataCollectionExecutor<X extends DataApi, Y extends DataApi> {
                         }
                     } else {
                         this._setProcessedState(this.service.getState(), operation)
-                        if (isErrorApi(restResponse.body)) {
-                            informError({
-                                message: restResponse?.body?.message,
-                                details: []
-                            })
+                        if (isErrorApi(restResponse.errorBody)) {
+                            // informError({
+                            //     message: restResponse?.errorBody?.message,
+                            //     details: []
+                            // })
+                            console.log(restResponse?.errorBody?.message)
                         }
                         if (401 === restResponse.status) {
                             this.authenticationService.doLogout()
@@ -344,15 +347,22 @@ export class DataCollectionExecutor<X extends DataApi, Y extends DataApi> {
                     return restResponse
                 })
                 .catch((error) => {
-                    informError({
-                        message: `Unable to ${operation.toLocaleLowerCase()} resources`,
-                        details: [
-                            {
-                                key: error.message,
-                                message: error.message
-                            }
-                        ]
-                    })
+                    // informError({
+                    //     message: `Unable to ${operation.toLocaleLowerCase()} resources`,
+                    //     details: [
+                    //         {
+                    //             key: error.message,
+                    //             message: error.message
+                    //         }
+                    //     ]
+                    // })
+                    console.log(`Unable to ${operation.toLocaleLowerCase()} resources`)
+                    console.log([
+                        {
+                            key: error.message,
+                            message: error.message
+                        }
+                    ])
                     this._setProcessedState(this.service.getState(), operation)
                 })
         } catch (error: any) {

@@ -1,4 +1,4 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState } from "../context-manager/ContextState";
 import { DataApi } from "../framework/DataApi";
 import { CollectionStateProps, ContexServiceState, DataCollectionExecutor } from "../framework/DataCollectionExecutor";
 import { ENVIRONEMNT_KEYS } from "../util/environment/EnvironmentKeys";

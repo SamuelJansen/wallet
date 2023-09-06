@@ -10,10 +10,7 @@ export interface State {
     [key: string]: any
 }
 
-export interface ServiceState extends State {
-}
-
-export interface ManagerState extends State {
+export interface StateExtender extends State {
 }
 
 export interface BinaryStateHandler {    
@@ -24,7 +21,7 @@ export interface BinaryStateHandler {
     switchIt: DispatchWithoutAction
 }
 
-export class ContexState<T extends ServiceState | ManagerState> {
+export class ContexState<T extends State | StateExtender> {
 
     stateUpdateHandler: any
     state: T

@@ -1,4 +1,4 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";

@@ -1,4 +1,4 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
@@ -15,27 +15,31 @@ const API_BASE_URL = `${EnvironmentUtil.isLocalToDevelopment() ? HTTPS_SCHEMA : 
 export interface CreditApi extends DataApi  {
     value: number
     limit: number
-    currentLimit: number
 }
 export interface CreditCardRequestApi extends DataApi {
-    value: number
+    cardNumber: string
+    label: string
     closingDay: number
-    creditKey: string
     dueDay: number
     expirationDate: string
-    label: string
+    provider: string
+    limit: number
     customLimit: number
+    creditKey: string | null
 }
 
 export interface CreditCardApi extends DataApi {
+    cardNumber: string
+    label: string
     value: number
-    credit: CreditApi
     closingDay: number
-    creditKey: string
     dueDay: number
     expirationDate: string
-    label: string
+    provider: string
+    limit: number
     customLimit: number
+    creditKey: string
+    credit: CreditApi
 }
 
 export interface CreditCardServiceStateProps extends ContexServiceState<CreditCardApi> {
@@ -49,7 +53,7 @@ export interface CreditCardServiceProps {
 export class CreditCardService extends ContexState<CreditCardServiceStateProps> implements CreditCardServiceProps {
 
     authenticationService: AuthenticationService
-    creditCardsCollectionExecutor: DataCollectionExecutor<CreditCardApi, CreditCardRequestApi>
+    creditCardCollectionExecutor: DataCollectionExecutor<CreditCardApi, CreditCardRequestApi>
 
     constructor(props: CreditCardServiceProps) {
         super()
@@ -57,7 +61,7 @@ export class CreditCardService extends ContexState<CreditCardServiceStateProps> 
             ...this.state
         } as CreditCardServiceStateProps
         this.authenticationService = props.authenticationService
-        this.creditCardsCollectionExecutor = new DataCollectionExecutor<CreditCardApi, CreditCardRequestApi>({
+        this.creditCardCollectionExecutor = new DataCollectionExecutor<CreditCardApi, CreditCardRequestApi>({
             url: `${API_BASE_URL}/credit-card/all`, 
             stateName: `creditCards`, 
             service: this,
@@ -65,12 +69,21 @@ export class CreditCardService extends ContexState<CreditCardServiceStateProps> 
         })
     }
 
-    getCachedCreditCards = () : CreditCardApi[] => {
-        return this.creditCardsCollectionExecutor.accessCachedDataCollection()
+    createCreditCards = (creditCardCollection: CreditCardRequestApi[], props?: { callback?: CallableFunction }): CreditCardApi[] => {
+        this.creditCardCollectionExecutor.postDataCollection(creditCardCollection, {}, props?.callback)
+        return this.creditCardCollectionExecutor.accessCachedDataCollection()
     }
 
-    getCreditCards = (query?: {keyList: string[]}) : CreditCardApi[] => {
-        return this.creditCardsCollectionExecutor.getDataCollection({query})
+    getCachedCreditCards = (): CreditCardApi[] => {
+        return this.creditCardCollectionExecutor.accessCachedDataCollection()
+    }
+
+    getCreditCards = (query?: {keyList: string[]}): CreditCardApi[] => {
+        return this.creditCardCollectionExecutor.getDataCollection({query})
+    }
+
+    revertCreditCardCollection = (requestCollection: CreditCardApi[], props?: { callback?: CallableFunction }): void => {
+        this.creditCardCollectionExecutor.deleteDataCollection(requestCollection, {}, props?.callback)
     }
     
 }

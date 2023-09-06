@@ -1,16 +1,16 @@
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 
-import { ContexState, ManagerState } from "../context-manager/ContextState"
+import { ContexState, State } from "../context-manager/ContextState"
 import { StyleService } from "../service/StyleService"
 import { PAGES, PageService } from "../service/PageService"
 import { BalanceManager } from "../manager/BalanceManager"
 import { InvestmentManager } from "../manager/InvestmentManager"
 import { CreditCardManager } from './CreditCardManager'
-import { Bank, CreditCard } from 'phosphor-react'
+import { Bank, CreditCard } from '@phosphor-icons/react'
 import { ObjectUtil } from '../util/ObjectUtil'
 
 
-export interface PageManagerStateProps extends ManagerState {
+export interface PageManagerStateProps extends State {
 }
 
 export interface PageManagerProps {
@@ -48,25 +48,22 @@ export class PageManager extends ContexState<PageManagerStateProps> implements P
             [PAGES.BALANCE_PAGE_NAME]: {
                 getData: () => this.balanceManager.getBalances(),
                 renderPage: () => this.balanceManager.renderBalances(),
-                reRenderPage: () => {
+                reloadData: () => {
                     this.balanceManager.getBalances()
-                    this.balanceManager.renderBalances()
                 }
             },
             [PAGES.INVESTMENT_PAGE_NAME]: {
                 getData: () => this.investmentManager.getInvestments(),
                 renderPage: () => this.investmentManager.renderInvestments(),
-                reRenderPage: () => {
+                reloadData: () => {
                     this.investmentManager.getInvestments()
-                    this.investmentManager.renderInvestments()
                 }
             },
             [PAGES.CREDIT_CARD_PAGE_NAME]: {
                 getData: () => this.creditCardManager.getCreditCards(),
                 renderPage: () => this.creditCardManager.renderCreditCards(),
-                reRenderPage: () => {
-                    this.creditCardManager.getCreditCards()
-                    this.creditCardManager.renderCreditCards()
+                reloadData: () => {
+                    this.creditCardManager.getCreditCards({ keyList: [], date: this.creditCardManager.getDate()})
                 }
             }
         }
@@ -84,7 +81,7 @@ export class PageManager extends ContexState<PageManagerStateProps> implements P
                     value={pageName}
                     // className={`w-[50px] h-full mr-4 ${this.pageService.isSelectedPage(pageName) ? this.styleService.getTWBorder() : ''} flex justify-center items-center ${this.styleService.getTWTextColor()}`}
                     className={`w-[30px] h-full mr-4 flex justify-center items-center ${this.styleService.getTWTextColor()}`}
-                    onClick={() => this.pages[pageName].getData() }
+                    onClick={() => this.pageService.isSelectedPage(pageName) ? this.pages[pageName].reloadData() : this.pages[pageName].getData() }
                 >
                     {
                         ObjectUtil.equals(PAGES.CREDIT_CARD_PAGE_NAME, pageName) ?
@@ -127,11 +124,6 @@ export class PageManager extends ContexState<PageManagerStateProps> implements P
 
     renderPage = (pageName: string) => {
         return !!Object.keys(this.pages).find(p => pageName === p) && this.pages[pageName].renderPage()
-    }
-
-    reRenderSelectedPage = () => {
-        const pageName = this.pageService.getSelectedPage()
-        return !!Object.keys(this.pages).find(p => pageName === p) && this.pages[pageName].reRenderPage()
     }
 }
 

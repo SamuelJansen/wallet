@@ -1,4 +1,4 @@
-import { ContexState, ManagerState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
 import { InvestmentReportApi, InvestmentReturnsReportApi, InvestmentService } from "../service/InvestmentService";
 
@@ -18,7 +18,7 @@ import {
 import { Line } from "react-chartjs-2";
 
 
-export interface InvestmentManagerProps extends ManagerState {
+export interface InvestmentManagerProps extends State {
 }
 
 

@@ -1,17 +1,17 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StorageUtil } from "../util/storage/StorageUtil";
 import { STORAGE_KEYS } from "../util/storage/SotrageKeys";
 import { AuthenticationService } from "./AuthenticationService"
 import { PageManager } from "../manager/PageManager";
 
-export const PAGES = {
-    BALANCE_PAGE_NAME: 'balances',
-    INVESTMENT_PAGE_NAME: 'investments',
-    CREDIT_CARD_PAGE_NAME: 'credit-card'
-}
 export const BALANCE_PAGE_NAME = 'balances' 
 export const INVESTMENT_PAGE_NAME = 'investments' 
-export const CREDIT_CARD_PAGE_NAME = 'credit-card'
+export const CREDIT_CARD_PAGE_NAME = 'credit-cards'
+export const PAGES = {
+    BALANCE_PAGE_NAME: BALANCE_PAGE_NAME,
+    INVESTMENT_PAGE_NAME: INVESTMENT_PAGE_NAME,
+    CREDIT_CARD_PAGE_NAME: CREDIT_CARD_PAGE_NAME
+}
 export const DEFAULT_PAGE_NAME = BALANCE_PAGE_NAME
 export const PAGES_NAMES = [
     PAGES.BALANCE_PAGE_NAME,
@@ -20,7 +20,7 @@ export const PAGES_NAMES = [
 ]
 
 
-export interface PageServiceStateProps extends ServiceState {
+export interface PageServiceStateProps extends State {
     selectedPage: string
 }
 export interface PageServiceProps {

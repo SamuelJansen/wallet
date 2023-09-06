@@ -1,12 +1,12 @@
-import { ContexState, ManagerState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
 import { ResourceAccessAllRequestApi, ResourceService } from "../service/ResourceService";
-import { DotsThreeOutlineVertical } from 'phosphor-react'
+import { DotsThreeOutline, DotsThreeOutlineVertical } from '@phosphor-icons/react'
 import { ObjectUtil } from "../util/ObjectUtil";
 import { CreditCardApi } from "../service/CreditCardService";
 import { InvoiceService } from "../service/InvoiceService";
 
-export interface ResourceManagerStateProps extends ManagerState {
+export interface ResourceManagerStateProps extends State {
 }
 
 export interface ResourceManagerProps {
@@ -37,24 +37,6 @@ export class ResourceManager extends ContexState<ResourceManagerStateProps> impl
     getResources = () => {
         // return this.resourceService.getResources()
         return []
-    }
-
-    handleShareAll = (event: any) => {
-
-    }
-
-    renderCreditCardOperations = (creditCard: CreditCardApi) => {
-        return (
-            <div
-                className={`w-full h-4 flex items-center justify-end ${this.styleService.getTWTextColor()}`}
-            >
-                {/* <DotsThreeOutlineVertical 
-                    id={'access-credit-card-options'}
-                    size={18} 
-                    onClick={() => this.resourceService.shareCreditCardCollection([])}
-                /> */}
-            </div>
-        )
     }
 }
 

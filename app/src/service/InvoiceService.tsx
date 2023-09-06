@@ -1,4 +1,4 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
@@ -30,6 +30,7 @@ export enum INSTALLMENT_STATUS {
     SCHEADULED = "SCHEADULED",
     PROCESSING = "PROCESSING",
     PROCESSED = "PROCESSED",
+    REVERTING = "REVERTING",
     REVERTED = "REVERTED",
     ERROR = "ERROR",
     NONE = "NONE"

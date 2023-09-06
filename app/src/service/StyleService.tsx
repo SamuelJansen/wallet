@@ -1,8 +1,8 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StorageUtil } from '../util/storage/StorageUtil';
 import { STORAGE_KEYS } from '../util/storage/SotrageKeys';
 
-export interface StyleStateProps extends ServiceState {
+export interface StyleStateProps extends State {
 
 }
 
@@ -59,8 +59,8 @@ export class StyleService extends ContexState<StyleStateProps> {
         }
     }
 
-    getTWDialog = () => {
-        return `fixed bg-[#333333] py-6 px-6 text-white top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg max-w-[480px] w-[90%] shadow-lg shadow-black/25`
+    getFooterButtonContent = () => {
+        return `mt-4 flex justify-center gap-x-6`
     }
 
     getIconSize = () => {

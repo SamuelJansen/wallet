@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
-import { UserCircle} from 'phosphor-react'
+import { UserCircle} from '@phosphor-icons/react'
 import { ICON_SIZE } from '../../service/StyleService';
 
 

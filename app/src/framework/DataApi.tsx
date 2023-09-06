@@ -13,7 +13,8 @@ export function isErrorApi(instance: any) : instance is ErrorApi {
 
 export interface RestResponse<B> {
     originalResponse: any
-    body: ErrorApi | B | Array<B>
+    body?: B | Array<B>
+    errorBody?: ErrorApi 
     status: number
 }
 

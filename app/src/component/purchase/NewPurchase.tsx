@@ -1,24 +1,33 @@
-import { FormEvent, useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { AppContext, AppContextProps } from '../../context/AppContext';
 import { ICON_SIZE, StyleService } from '../../service/StyleService'
 import { InvoiceManager } from '../../manager/InvoiceManager';
 import { DateTimeUtil } from '../../util/DateTimeUtil';
 import { Input } from '../form/Input';
 import { PurchaseRequestApi } from '../../service/PurchaseService';
-import { ArrowFatLinesUp, ArrowFatLinesDown, PlusCircle, XCircle, PaperPlaneRight, ArrowFatLineLeft, ArrowFatLineRight, CreditCard } from 'phosphor-react';
+import { PlusCircle, XCircle, ArrowFatLineLeft, ArrowFatLineRight, CurrencyCircleDollar, ShoppingCartSimple } from '@phosphor-icons/react';
 import { ObjectUtil } from '../../util/ObjectUtil';
 import { StringUtil } from '../../util/StringUtil';
 import * as Dialog from "@radix-ui/react-dialog";
 import { useBinaryStateHandler } from '../../context-manager/ContextState';
 import { CreditCardApi } from '../../service/CreditCardService';
+import { componentExecutor } from '../../framework/ComponentExecutor';
+import { Modal } from '../form/Modal';
 
 
-const OPERATION_TYPES = {
-    purchase: 'purchase', // <ArrowFatLinesUp/>,
-    payment: 'payment' // <ArrowFatLinesDown/>
-} as const
+const enum PURCHASE_OPERATION_TYPE {
+    PURCHASE = 'purchase', // <ArrowFatLinesUp/>,
+    PAYMENT = 'payment', // <ArrowFatLinesDown/>
+    NONE = 'none' // <ArrowFatLinesDown/>
+}
 
-export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
+interface NewPurchaseProps { 
+    operation: PURCHASE_OPERATION_TYPE,
+    purchaseRequest: PurchaseRequestApi, 
+    creditCardRequest: CreditCardApi 
+}
+
+export const NewPurchase = (props: { creditCard: CreditCardApi }) => {
     const { 
         styleService,
         invoiceManager
@@ -26,8 +35,6 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
         styleService: StyleService,
         invoiceManager: InvoiceManager
     } = useContext<AppContextProps>(AppContext)
-
-    const newPurchaseBSH = useBinaryStateHandler(false)
     const setDate = (date: Date): void => {
         invoiceManager.setDate(date, { creditCardKey: props.creditCard.key })
     }
@@ -42,25 +49,33 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
         setDate(DateTimeUtil.addMonths(getDate(), 1))
         return getDate()
     }
-    const handleCreatePurchase = async (event: FormEvent) => {
-        event.preventDefault()
-        const formData = new FormData(event.target as HTMLFormElement)
-        const data = Object.fromEntries(formData)
-        const purchaseRequest: PurchaseRequestApi = {
-            key: null,
-            label: StringUtil.concatIt(new String(data.purchaseLabel).split(' '), ' ').toUpperCase(),
-            value: (OPERATION_TYPES.payment === data.operation ? 1 : -1) * Number(data.purchaseValue),
-            purchaseAt: DateTimeUtil.concatRestDateTime({
-                yearDashMOnthDashDay: String(data.purchaseDate), 
-                hourDashMinute: String(data.purchaseTime)
-            }),
-            installments: ObjectUtil.isEmpty(data.purchaseTimes) || ObjectUtil.equals(0, data.purchaseTimes) ? 1 : Number(data.purchaseTimes),
-            creditCardKey: String(props.creditCard.key)
-        }
-        const creditCardRequest = {
-            ...props.creditCard
-        } as CreditCardApi
-        try{
+    const [selectedOperation, setSelectedOperation] = useState<PURCHASE_OPERATION_TYPE>(PURCHASE_OPERATION_TYPE.PURCHASE)
+    const newPurchaseBSH = useBinaryStateHandler(false)
+    const handleCreatePurchase = componentExecutor({
+        requestConstructor: (data: any): NewPurchaseProps => {
+            return {
+                operation: selectedOperation,
+                purchaseRequest: {
+                    key: null,
+                    label: StringUtil.concatIt(new String(data.purchaseLabel).split(' '), ' ').toUpperCase(),
+                    value: (PURCHASE_OPERATION_TYPE.PAYMENT === selectedOperation ? 1 : -1) * Number(data.purchaseValue),
+                    purchaseAt: DateTimeUtil.concatRestDateTime({
+                        yearDashMonthDashDay: String(data.purchaseDate), 
+                        hourDashMinute: String(data.purchaseTime)
+                    }),
+                    installments: ObjectUtil.isEmpty(data.purchaseTimes) || ObjectUtil.equals(0, data.purchaseTimes) ? 1 : Number(data.purchaseTimes),
+                    creditCardKey: String(props.creditCard.key)
+                },
+                creditCardRequest: {
+                    ...props.creditCard
+                }
+            }
+        }, 
+        validator: (props: NewPurchaseProps) => {
+            const { operation, purchaseRequest, creditCardRequest } = {...props}
+            if (ObjectUtil.equals(PURCHASE_OPERATION_TYPE.NONE, operation) || ObjectUtil.isEmpty(operation)) {
+                throw new Error('Operation not selected')
+            }
             if (StringUtil.isEmpty(purchaseRequest.label)) {
                 throw new Error('Label cannot be empty')
             }
@@ -70,15 +85,19 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
             if (ObjectUtil.isEmpty(purchaseRequest.installments) || ObjectUtil.equals(0, purchaseRequest.installments)) {
                 throw new Error('Installments cannot be empty')
             }
+            if (ObjectUtil.equals(PURCHASE_OPERATION_TYPE.PAYMENT, operation) && ObjectUtil.notEquals(1, purchaseRequest.installments)) {
+                throw new Error('Payment need to be one time only')
+            }
+        }, 
+        requestProcessor: (props: NewPurchaseProps) => {
+            const { operation, purchaseRequest, creditCardRequest } = {...props}
+            console.log(purchaseRequest)
             invoiceManager.newPurchase({ purchaseRequest, creditCardRequest })
+        }, 
+        postRequestProcessor: () => {
             newPurchaseBSH.switchIt()
-            // alert('')
-        } catch (err: any) {
-            console.log(err)
-            alert(`Purchase creation error: ${err.message}`)
-        }
-    }
-
+        } 
+    })
     const renderNewPurchaseForm = () => {
         return (
             <form onSubmit={(event) => handleCreatePurchase(event)} className='mt-2 flex flex-col'>
@@ -132,34 +151,6 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                             label='' 
                             placeholder='time'
                         /> 
-                        <div className='flex flex-col'>
-                            {/* <label htmlFor='operation' className='font-semibold'>Qual o game</label> */}
-                            <select 
-                                id='operation' 
-                                name='operation'
-                                className='w-full h-[90%] flex justify-center py-1 px-3 space-x-0 bg-zinc-900 rounded placeholder:text-zinc-500 appearance-none'
-                                defaultValue=''
-                                style={{
-                                    fontSize: '10px'
-                                }}
-                            >
-                                {/* <option disabled value='' className='flex space-between text-zinc-500'>
-                                    Selecione o game que deseja jogar
-                                </option> */}
-                                {ObjectUtil.keys(OPERATION_TYPES).map((operation) => {
-                                    return (
-                                        <option 
-                                            className='flex justify-center'
-                                            key={operation} 
-                                            value={operation} 
-                                            data-content={operation === OPERATION_TYPES.payment ? <ArrowFatLinesUp/> : <ArrowFatLinesDown/>}
-                                        >
-                                            {operation === OPERATION_TYPES.payment ? 'Pay' : 'Buy'}
-                                        </option>
-                                    )
-                                })}
-                            </select>
-                        </div>
                     </div>
                     <div
                         className='text-gray-100 gap-x-2'
@@ -172,7 +163,7 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                         }}
                     >
                         <Input
-                            // width='max-w-[40%]'
+                            width='w-[70%]'
                             key='purchaseValue' 
                             name='purchaseValue'
                             type='monetary'
@@ -180,7 +171,6 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                             placeholder='value'
                         /> 
                         <Input
-                            // width='max-w-[40%]'
                             key='purchaseTimes' 
                             name='purchaseTimes'
                             type='number'
@@ -188,10 +178,9 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                             placeholder='times'
                         /> 
                     </div>
-                    <footer className='mt4 flex justify-end gap-x-4'>
+                    <footer className={styleService.getFooterButtonContent()}>
                         <Dialog.Close 
                             id={'cancel-purchase'}
-                            // className={styleService.getTWCancelButton()}
                             onClick={() => newPurchaseBSH.switchIt()}
                         >
                             <XCircle
@@ -200,12 +189,23 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                             />
                         </Dialog.Close>
                         <button 
+                            id={'confirm-payment'}
+                            type='submit' 
+                            onClick={() => { setSelectedOperation(PURCHASE_OPERATION_TYPE.PAYMENT) }}
+                            onSubmit={() => {}}
+                        >
+                            <CurrencyCircleDollar 
+                                size={ICON_SIZE}
+                                color={styleService.getConfirmButtonColor()}
+                            />
+                        </button>
+                        <button 
                             id={'confirm-purchase'}
                             type='submit' 
+                            onClick={() => { setSelectedOperation(PURCHASE_OPERATION_TYPE.PURCHASE) }}
                             onSubmit={() => {}}
-                            // className={styleService.getTWMainButton()}
                         >
-                            <PaperPlaneRight
+                            <ShoppingCartSimple  
                                 size={ICON_SIZE}
                                 color={styleService.getConfirmButtonColor()}
                             />
@@ -215,7 +215,6 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
             </form>
         )
     }
-
     return (
         <div
             className='text-gray-100'
@@ -279,17 +278,11 @@ export const CreditCardOperations = (props: { creditCard: CreditCardApi }) => {
                     }</button>
                 </div>
                 {
-                    newPurchaseBSH.isIt() ?
-                    <Dialog.Portal>
-                        <Dialog.Overlay className='bg-black/30 inset-0 fixed'/>
-                        <Dialog.Content 
-                            className={styleService.getTWDialog()}
-                        >
-                            {
-                                renderNewPurchaseForm()
-                            }
-                        </Dialog.Content>
-                    </Dialog.Portal> :
+                    newPurchaseBSH.isIt() ? 
+                    <Modal
+                        title='new purchase'
+                        renderHandler={() => renderNewPurchaseForm()}
+                    /> :
                     <></>
                 }
                 </Dialog.Root> 

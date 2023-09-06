@@ -55,7 +55,7 @@ export const provideAppContext = (): AppContextProps => {
   const balanceManager = useContextState<BalanceManager>(() => BalanceManagerProvider({ styleService, balanceService }))
   const investmentManager = useContextState<InvestmentManager>(() => InvestmentManagerProvider({ styleService, investmentService }))
   const invoiceManager = useContextState<InvoiceManager>(() => InvoiceManagerProvider({ styleService, pageService, purchaseService, invoiceService, resourceService }))
-  const creditCardManager = useContextState<CreditCardManager>(() => CreditCardManagerProvider({ styleService, creditCardService, invoiceManager, resourceManager }))
+  const creditCardManager = useContextState<CreditCardManager>(() => CreditCardManagerProvider({ styleService, creditCardService, invoiceManager, resourceService }))
   const pageManager = useContextState<PageManager>(() => PageManagerProvider({ styleService, pageService, balanceManager, investmentManager, creditCardManager }))
 
   invoiceManager.setCreditCardManager(creditCardManager)

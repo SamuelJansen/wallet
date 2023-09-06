@@ -1,4 +1,4 @@
-import { ContexState, ServiceState } from "../context-manager/ContextState";
+import { ContexState } from "../context-manager/ContextState";
 import { EnvironmentUtil } from '../util/environment/EnvironmentUtil'
 import { ENVIRONEMNT_KEYS } from '../util/environment/EnvironmentKeys'
 import { AuthenticationService } from "./AuthenticationService";
@@ -35,8 +35,10 @@ export interface ResourceAccessAllRequestApi extends DataApi {
 }
 
 export interface ResourceServiceStateProps extends ContexServiceState<ResourceAccessApi> {
-    creditCards: CollectionStateProps<ResourceAccessApi>
-    purchases: CollectionStateProps<ResourceAccessApi>
+    shareCreditCards: CollectionStateProps<ResourceAccessApi>
+    transferCreditCards: CollectionStateProps<ResourceAccessApi>
+    sharePurchases: CollectionStateProps<ResourceAccessApi>
+    transferPurchases: CollectionStateProps<ResourceAccessApi>
 }
 
 export interface ResourceServiceProps {
@@ -44,7 +46,7 @@ export interface ResourceServiceProps {
 }
 
 
-export const SHARE_WITH_LIST = [
+export const CONTACT_LIST = [
     {
         key: 'samuel.jansenn@gmail.com',
         fullName: 'Samuel Jansen'
@@ -68,46 +70,80 @@ export const SHARE_WITH_LIST = [
 ]
 export const OPERATION_LIST = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 export const DOMAIN = {
-    PURCHASE: 'Purchase'
+    PURCHASE: 'Purchase',
+    CREDIT_CARD: 'CreditCard',
+    CREDIT: 'Credit'
 }
 
 
 export class ResourceService extends ContexState<ResourceServiceStateProps> implements ResourceServiceProps {
 
     authenticationService: AuthenticationService
-    creditCardsCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessRequestApi>
-    purchasesCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
+    shareCreditCardCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
+    transferCreditCardCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
+    sharePurchaseCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
+    transferPurchaseCollectionExecutor: DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>
 
     constructor(props: ResourceServiceProps) {
         super()
         this.state = {
             ...this.state,
             ...{
-                creditCards: {} as CollectionStateProps<ResourceAccessApi>,
-                purchases: {} as CollectionStateProps<ResourceAccessApi>
+                shareCreditCards: {} as CollectionStateProps<ResourceAccessApi>,
+                transferCreditCards: {} as CollectionStateProps<ResourceAccessApi>,
+                sharePurchases: {} as CollectionStateProps<ResourceAccessApi>,
+                transferPurchases: {} as CollectionStateProps<ResourceAccessApi>
             }
         } as ResourceServiceStateProps
         this.authenticationService = props.authenticationService
-        this.creditCardsCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessRequestApi>({
+        this.shareCreditCardCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>({
             url: `${API_BASE_URL}/resource/share/credit-card/all`, 
-            stateName: `creditCards`, 
+            stateName: `shareCreditCards`, 
             service: this,
             authenticationService: this.authenticationService
         })
-        this.purchasesCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>({
+        this.transferCreditCardCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>({
+            url: `${API_BASE_URL}/resource/transfer/credit-card/all`, 
+            stateName: `transferCreditCards`, 
+            service: this,
+            authenticationService: this.authenticationService
+        })
+        this.sharePurchaseCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>({
             url: `${API_BASE_URL}/resource/share/purchase/all`, 
-            stateName: `purchases`, 
+            stateName: `sharePurchases`, 
+            service: this,
+            authenticationService: this.authenticationService
+        })
+        this.transferPurchaseCollectionExecutor = new DataCollectionExecutor<ResourceAccessApi, ResourceAccessAllRequestApi>({
+            url: `${API_BASE_URL}/resource/transfer/purchase/all`, 
+            stateName: `transferPurchases`, 
             service: this,
             authenticationService: this.authenticationService
         })
     }
 
-    // shareCreditCardCollection = (newAccesses: ResourceAccessRequestApi[], callback?: CallableFunction) : ResourceAccessApi[] => {
-    //     return this.creditCardsCollectionExecutor.postDataCollection(newAccesses, {}, callback ? callback: ()=>{})
-    // }
+    shareCreditCardCollection = (newAccesses: ResourceAccessAllRequestApi[], props: { callback?: CallableFunction }) : ResourceAccessApi[] => {
+        return this.shareCreditCardCollectionExecutor.postDataCollection(newAccesses, {}, props.callback)
+    }
+
+    revokeCreditCardCollection = (accesses: ResourceAccessAllRequestApi[], props: { callback?: CallableFunction }) : ResourceAccessApi[] => {
+        return this.shareCreditCardCollectionExecutor.deleteDataCollection(accesses, {}, props.callback)
+    }
+
+    transferCreditCardCollection = (accesses: ResourceAccessAllRequestApi[], props: { callback?: CallableFunction }) : ResourceAccessApi[] => {
+        return this.transferCreditCardCollectionExecutor.postDataCollection(accesses, {}, props.callback)
+    }
 
     sharePurchaseCollection = (newAccesses: ResourceAccessAllRequestApi[], props: { callback?: CallableFunction }) : ResourceAccessApi[] => {
-        return this.purchasesCollectionExecutor.postDataCollection(newAccesses, {}, props.callback)
+        return this.sharePurchaseCollectionExecutor.postDataCollection(newAccesses, {}, props.callback)
+    }
+
+    revokePurchaseCollection = (accesses: ResourceAccessAllRequestApi[], props: { callback?: CallableFunction }) : ResourceAccessApi[] => {
+        return this.sharePurchaseCollectionExecutor.deleteDataCollection(accesses, {}, props.callback)
+    }
+
+    transferPurchaseCollection = (accesses: ResourceAccessAllRequestApi[], props: { callback?: CallableFunction }) : ResourceAccessApi[] => {
+        return this.transferPurchaseCollectionExecutor.postDataCollection(accesses, {}, props.callback)
     }
     
 }

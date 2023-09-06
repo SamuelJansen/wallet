@@ -10,7 +10,7 @@ const containsIt = (str: String, char: string): boolean => {
 
 const isEmpty = (thing: any): boolean => {
     if (thing instanceof String) {
-        return ! ObjectUtil.equals(stripIt(thing), '') 
+        return !! ObjectUtil.equals(stripIt(thing), '') 
     }
     return ObjectUtil.isEmpty(thing)
 }

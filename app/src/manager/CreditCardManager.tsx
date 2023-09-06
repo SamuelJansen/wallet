@@ -1,13 +1,15 @@
-import { ContexState, ManagerState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
-import { CreditCardApi, CreditCardService } from "../service/CreditCardService";
+import { CreditCardApi, CreditCardRequestApi, CreditCardService } from "../service/CreditCardService";
 import { DateTimeUtil } from "../util/DateTimeUtil";
 import { InvoiceManager } from "./InvoiceManager";
-import { ResourceManager } from "./ResourceManager";
 import { ObjectUtil } from "../util/ObjectUtil";
-import { CreditCardOperations } from "../component/CreditCard/CreditCardOperations";
+import { NewPurchase } from "../component/purchase/NewPurchase";
+import { NewCreditCard } from "../component/credit-card/NewCreditCard";
+import { ResourceAccessAllRequestApi, ResourceService } from "../service/ResourceService";
+import { CreditCardOperations } from "../component/credit-card/CreditCardOperations";
 
-export interface CreditCardManagerStateProps extends ManagerState {
+export interface CreditCardManagerStateProps extends State {
     accessibleCreditCardKeys: string[]
     openCreditCardKeys: string[]
     selectedCreditCard: {
@@ -17,25 +19,25 @@ export interface CreditCardManagerStateProps extends ManagerState {
 
 export interface CreditCardManagerProps {
     styleService: StyleService,
-    resourceManager: ResourceManager,
     creditCardService: CreditCardService,
-    invoiceManager: InvoiceManager
+    invoiceManager: InvoiceManager,
+    resourceService: ResourceService
 }
 
 
 export class CreditCardManager extends ContexState<CreditCardManagerStateProps> implements CreditCardManagerProps {
     
     styleService: StyleService
-    resourceManager: ResourceManager
     creditCardService: CreditCardService
     invoiceManager: InvoiceManager
+    resourceService: ResourceService
     
     constructor(props: CreditCardManagerProps) {
         super()
         this.styleService = props.styleService
-        this.resourceManager = props.resourceManager
         this.creditCardService = props.creditCardService
         this.invoiceManager = props.invoiceManager
+        this.resourceService = props.resourceService
         this.state = {
             ...this.state,
             ...{
@@ -46,6 +48,10 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                 openCreditCardKeys: []
             }
         } as CreditCardManagerStateProps
+    }
+
+    getDate = (props?: { creditCardKey: string | null }): Date => {
+        return this.invoiceManager.getDate(props)
     }
 
     pushAccessibleCreditCardKey = (key: string) => {
@@ -112,15 +118,14 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
                 key: creditCard.key
             }})
         }
-        // if () {
-        //     this.pushOpenCreditCardKey(creditCard.key)
-        // } else {
-        //     this.pushOpenCreditCardKey(creditCard.key)
-        // }
         const creditCardKeyList: Array<string> = [this.getSelectedCreditCard().key].filter(k => ObjectUtil.isNotNull(k)) as Array<string>
         if (ObjectUtil.isNotEmpty(creditCardKeyList)) {
-            this.getCreditCards({keyList: creditCardKeyList, date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })}) 
+            this.getCreditCards({keyList: creditCardKeyList, date: this.getDate({ creditCardKey: creditCard.key })}) 
         }
+    }
+
+    createCreditCard = (props: { creditCardRequest: CreditCardRequestApi }) => {
+        this.creditCardService.createCreditCards([props.creditCardRequest], { callback: () => this.renewCreditCards() })
     }
 
     getCreditCards = (props?: { keyList: string[], date: Date}) => {
@@ -128,25 +133,206 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
         const creditCardList = this.creditCardService.getCreditCards({ keyList: creditCardKeyList })
         creditCardList.map((creditCard: CreditCardApi) => {
             this.pushAccessibleCreditCardKey(!!creditCard.key ? creditCard.key : ObjectUtil.generateUniqueKey())
-            // this.invoiceManager.getInvoices({
-            //     creditCardList: [creditCard],
-            //     date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })
-            // })
         })
-        // const creditCard = creditCardList.filter((creditCard) => ObjectUtil.containsIt(creditCard.key, creditCardKeyList))[0]
         if (ObjectUtil.isEmpty(props)) {
             this.invoiceManager.getInvoices({
                 creditCardList: creditCardList,
-                date: props ? props.date : this.invoiceManager.getDate()
+                date: props ? props.date : this.getDate()
             })
         } else {
             const creditCard = creditCardList.filter((creditCard) => ObjectUtil.containsIt(creditCard.key, creditCardKeyList))[0]
             this.invoiceManager.getInvoices({
-                creditCardList: [creditCard],
-                date: props ? props.date : this.invoiceManager.getDate({ creditCardKey: creditCard.key })
+                creditCardList: creditCard ? [creditCard] : [],
+                date: props ? props.date : this.getDate({ creditCardKey: creditCard.key })
             })
         }
         return creditCardList
+    }
+
+    renewCreditCards = (props?: { keyList: string[] }) => {
+        props?.keyList.map(key => {
+            this.popAccessibleCreditCardKey(key)
+        })
+        this.creditCardService.creditCardCollectionExecutor.clearDataCollection()
+        this.getCreditCards({ keyList : [], date: this.getDate() })
+    }
+
+    revertCreditCard = (props: { creditCardRequest: CreditCardApi }) => {
+        const {
+            creditCardRequest
+        } = {...props}
+        this.creditCardService.revertCreditCardCollection([creditCardRequest], { callback: () => this.renewCreditCards({ keyList: creditCardRequest.key ? [creditCardRequest.key] : [] }) })
+    }
+
+    shareCreditCard = ( props: { creditCardResourceAccessAllRequest: ResourceAccessAllRequestApi, creditCardRequest: CreditCardApi } ) => {
+        const {
+            creditCardResourceAccessAllRequest,
+            creditCardRequest
+        } = {...props}
+        this.resourceService.shareCreditCardCollection([creditCardResourceAccessAllRequest], { callback: () => this.renewCreditCards({ keyList: creditCardRequest.key ? [creditCardRequest.key] : [] }) })
+    }
+
+    revokeCreditCard = ( props: { creditCardResourceAccessAllRequest: ResourceAccessAllRequestApi, creditCardRequest: CreditCardApi } ) => {
+        const {
+            creditCardResourceAccessAllRequest,
+            creditCardRequest
+        } = {...props}
+        this.resourceService.revokeCreditCardCollection([creditCardResourceAccessAllRequest], { callback: () => this.renewCreditCards({ keyList: creditCardRequest.key ? [creditCardRequest.key] : [] }) })
+    }
+
+    transferCreditCard = ( props: { creditCardResourceAccessAllRequest: ResourceAccessAllRequestApi, creditCardRequest: CreditCardApi } ) => {
+        const {
+            creditCardResourceAccessAllRequest,
+            creditCardRequest
+        } = {...props}
+        this.resourceService.transferCreditCardCollection([creditCardResourceAccessAllRequest], { callback: () => this.renewCreditCards({ keyList: creditCardRequest.key ? [creditCardRequest.key] : [] }) })
+    }
+
+    renderCreditCard = (creditCard: CreditCardApi) => {
+        return (
+            <div 
+                key={creditCard.key}
+                className={"container"}
+                style={{
+                    maxWidth: '800px',
+                    margin: '0 auto 20px auto',
+                    padding: '20px',
+                    backgroundColor: '#111',
+                    boxShadow: '0 0 10px rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}
+            >
+                <CreditCardOperations
+                    creditCard={creditCard}
+                />
+                <div className={"card"}
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'space-around',
+                        width: '350px',
+                        height: '240px',
+                        backgroundColor: '#333',
+                        borderRadius: '10px',
+                        boxShadow: '0 0 10px rgba(255, 255, 255, 0.1)',
+                        marginBottom: '20px',
+                        position: 'relative'
+                    }}
+                    onClick={() => this.setSelectedCreditCard(creditCard)}
+                >
+                    <div className={"card-number"}
+                        style={{
+                            fontSize: '24px',
+                            fontFamily: '"Courier New", monospace',
+                            color: '#CCC'
+                        }}
+                    >{creditCard.label}</div>
+                    <div className={"card-number"}
+                        style={{
+                            fontSize: '24px',
+                            fontFamily: '"Courier New", monospace',
+                            color: '#CCC'
+                        }}
+                    >xxxx xxxx xxxx xxxx</div>
+                    <div
+                        className={"card-number"}
+                        style={{
+                            fontSize: '14px',
+                            fontFamily: '"Courier New", monospace',
+                            color: '#CCC'
+                        }}
+                    >Exp.: {DateTimeUtil.fromRestDateToMonthSlashYear(creditCard.expirationDate)}</div>
+                </div>
+                <div 
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '350px',
+                        listStyle: 'none',
+                        padding: '0',
+                        margin: '0',
+                        alignItems: 'center',
+                        alignContent: 'center',
+                    
+                    }}
+                >
+                    <div
+                        className='text-gray-100'
+                        style={{
+                            display: 'flex',
+                            width: '100%',
+                            marginBottom: '10px',
+                            fontSize: '18px',
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                width: '50%'
+                            }}
+                        >Balance: R$ {creditCard.value}</div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                width: '50%'
+                            }}
+                        >Limit: R$ {-creditCard.customLimit}</div>
+                    </div>
+                    {
+                        this.invoiceManager.renderInvoiceDetails({
+                            creditCard: creditCard,
+                            date: this.getDate({ creditCardKey: creditCard.key })
+                        })
+                    }
+                    <NewPurchase
+                        creditCard={creditCard}
+                    />
+                </div>
+                {
+                    this.getSelectedCreditCard().key === creditCard.key ? (
+                        <div
+                            style={{
+                                width: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <h2
+                                style={{
+                                    marginTop: '20px',
+                                    marginBottom: '10px',
+                                    fontSize: '18px',
+                                    color: '#666'
+                                }}
+                            >Installments:</h2>
+                            <div className={"transactions"}
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    marginBottom: '20px'
+                                }}
+                            >
+                                {
+                                    this.invoiceManager.renderInvoices({
+                                        creditCard: creditCard,
+                                        date: this.getDate({ creditCardKey: creditCard.key })
+                                    })
+                                }
+                            </div>
+                        </div>
+                    ) : <></>
+                }
+            </div>
+        )
     }
 
     renderCreditCards = () => {
@@ -154,151 +340,21 @@ export class CreditCardManager extends ContexState<CreditCardManagerStateProps> 
         if (1 === creditCardList.length && !!!this.getSelectedCreditCard().key) {
             this.setSelectedCreditCard(creditCardList[0])
         }
-        
-        return creditCardList.map((creditCard: CreditCardApi) => {
-            return (
-                <div 
-                    key={creditCard.key}
-                    className={"container"}
-                    style={{
-                        maxWidth: '800px',
-                        margin: '0 auto 20px auto',
-                        padding: '20px',
-                        backgroundColor: '#111',
-                        boxShadow: '0 0 10px rgba(255, 255, 255, 0.1)',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                      }}
-                >
-                    {this.resourceManager.renderCreditCardOperations(creditCard)}
-                    <div className={"card"}
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'space-around',
-                            width: '350px',
-                            height: '240px',
-                            backgroundColor: '#333',
-                            borderRadius: '10px',
-                            boxShadow: '0 0 10px rgba(255, 255, 255, 0.1)',
-                            marginBottom: '20px',
-                            position: 'relative'
-                          }}
-                          onClick={() => this.setSelectedCreditCard(creditCard)}
-                    >
-                        <div className={"card-number"}
-                            style={{
-                                fontSize: '24px',
-                                fontFamily: '"Courier New", monospace',
-                                color: '#CCC'
-                            }}
-                        >{creditCard.label}</div>
-                        <div className={"card-number"}
-                            style={{
-                                fontSize: '24px',
-                                fontFamily: '"Courier New", monospace',
-                                color: '#CCC'
-                            }}
-                        >xxxx xxxx xxxx xxxx</div>
-                        <div
-                            className={"card-number"}
-                            style={{
-                                fontSize: '14px',
-                                fontFamily: '"Courier New", monospace',
-                                color: '#CCC'
-                            }}
-                        >Exp.: {DateTimeUtil.fromRestDateToMonthSlashYear(creditCard.expirationDate)}</div>
-                    </div>
-                    <div 
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            width: '350px',
-                            listStyle: 'none',
-                            padding: '0',
-                            margin: '0',
-                            alignItems: 'center',
-                            alignContent: 'center',
-                        
-                        }}
-                    >
-                        <div
-                            className='text-gray-100'
-                            style={{
-                                display: 'flex',
-                                width: '100%',
-                                marginBottom: '10px',
-                                fontSize: '18px',
-                            }}
-                        >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    width: '50%'
-                                }}
-                            >Balance: R$ {creditCard.value}</div>
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    width: '50%'
-                                }}
-                            >Limit: R$ {-creditCard.customLimit}</div>
-                        </div>
-                        {
-                            this.invoiceManager.renderInvoiceDetails({
-                                creditCard: creditCard,
-                                date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })
-                            })
-                        }
-                        <CreditCardOperations
-                            creditCard={creditCard}
-                        />
-                    </div>
-                    {
-                        this.getSelectedCreditCard().key === creditCard.key ? (
-                            <div
-                                style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center'
-                                }}
-                            >
-                                <h2
-                                    style={{
-                                        marginTop: '20px',
-                                        marginBottom: '10px',
-                                        fontSize: '18px',
-                                        color: '#666'
-                                    }}
-                                >Installments:</h2>
-                                <div className={"transactions"}
-                                    style={{
-                                        width: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        marginBottom: '20px'
-                                    }}
-                                >
-                                    {
-                                        this.invoiceManager.renderInvoices({
-                                            creditCard: creditCard,
-                                            date: this.invoiceManager.getDate({ creditCardKey: creditCard.key })
-                                        })
-                                    }
-                                </div>
-                            </div>
-                        ) : <></>
-                    }
-                </div>
-            )
-        })
+        return (
+            <div
+                style={{
+                    width: '100%',
+                    margin: '0 auto 20px auto',
+                    padding: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}
+            >
+                { creditCardList.map((creditCard: CreditCardApi) => this.renderCreditCard(creditCard)) }
+                <NewCreditCard/>
+            </div>
+        ) 
     }
 }
 

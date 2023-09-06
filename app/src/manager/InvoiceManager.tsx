@@ -1,4 +1,4 @@
-import { ContexState, ManagerState } from "../context-manager/ContextState";
+import { ContexState, State } from "../context-manager/ContextState";
 import { StyleService } from "../service/StyleService";
 import { InstallmentApi, InvoiceApi, InvoiceQueryApi, InvoiceService } from "../service/InvoiceService";
 import { DateTimeUtil } from "../util/DateTimeUtil";
@@ -8,10 +8,10 @@ import { PageService } from "../service/PageService";
 import { ObjectUtil } from "../util/ObjectUtil";
 import { CreditCardManager } from "./CreditCardManager";
 import { PurchaseRequestApi, PurchaseService } from "../service/PurchaseService";
-import { PurchaseOperations } from "../component/purchases/PurchaseOperations";
+import { PurchaseOperations } from "../component/purchase/PurchaseOperations";
 import { ResourceAccessAllRequestApi, ResourceService } from "../service/ResourceService";
 
-export interface InvoiceManagerStateProps extends ManagerState {
+export interface InvoiceManagerStateProps extends State {
     date: Date
     creditCardDateCollection: Map<string, Date>
     selectedPurchaseKeys: string[]
@@ -141,12 +141,28 @@ export class InvoiceManager extends ContexState<InvoiceManagerStateProps> implem
         this.purchaseService.revertPurchaseCollection([purchaseRequest], { callback: () => this.renewInvoices({ creditCardRequest }) })
     }
 
-    transferPurchase = ( props: { purchaseColllectionRequest: ResourceAccessAllRequestApi[], creditCardRequest: CreditCardApi } ) => {
+    sharePurchase = ( props: { purchaseResourceAccessAllRequest: ResourceAccessAllRequestApi, creditCardRequest: CreditCardApi } ) => {
         const {
-            purchaseColllectionRequest,
+            purchaseResourceAccessAllRequest,
             creditCardRequest
         } = {...props}
-        this.resourceService.sharePurchaseCollection(purchaseColllectionRequest, { callback: () => this.renewInvoices({ creditCardRequest }) })
+        this.resourceService.sharePurchaseCollection([purchaseResourceAccessAllRequest], { callback: () => this.renewInvoices({ creditCardRequest }) })
+    }
+
+    revokePurchase = ( props: { purchaseResourceAccessAllRequest: ResourceAccessAllRequestApi, creditCardRequest: CreditCardApi } ) => {
+        const {
+            purchaseResourceAccessAllRequest,
+            creditCardRequest
+        } = {...props}
+        this.resourceService.revokePurchaseCollection([purchaseResourceAccessAllRequest], { callback: () => this.renewInvoices({ creditCardRequest }) })
+    }
+
+    transferPurchase = ( props: { purchaseResourceAccessAllRequest: ResourceAccessAllRequestApi, creditCardRequest: CreditCardApi } ) => {
+        const {
+            purchaseResourceAccessAllRequest,
+            creditCardRequest
+        } = {...props}
+        this.resourceService.transferPurchaseCollection([purchaseResourceAccessAllRequest], { callback: () => this.renewInvoices({ creditCardRequest }) })
     }
 
     renewInvoices = (props: { creditCardRequest: CreditCardApi }): void => {
